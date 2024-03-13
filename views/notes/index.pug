@@ -1,0 +1,83 @@
+extends ../layout
+
+block content
+  .container.mt-3
+    .row.mb-4
+      .col-md-8
+        form(class="d-flex", method="GET", action="/notes/search")
+          input.form-control.me-2(type="search", name="query", placeholder="Busca en tus notas", aria-label="Search")
+          button.btn.btn-outline-success(type="submit") Buscar
+
+    // Formulario para agregar notas
+    .row.mb-4
+      .col-12
+        .note-add-form.position-relative
+          input#noteTitle.form-control(type="text", placeholder="Título de la nota", onfocus="expandNoteForm()")
+          textarea#noteContent.form-control.note-content(name='content', rows='3', placeholder='Añade un texto...').d-none
+          .note-actions.d-none
+            // Botón para agregar un elemento de lista
+            button.btn.btn-outline-secondary(type='button', onclick="addListItem()")
+              i.bi.bi-list-ul
+            // Botón para cargar una imagen
+            button.btn.btn-outline-secondary(type='button', onclick="document.getElementById('imageUpload').click()")
+              i.bi.bi-image
+            input#imageUpload(type='file', name='image', accept='image/*').d-none
+            // Botones para guardar y cancelar
+            button.btn.btn-danger(type='button', onclick="cancelNoteCreation()").d-none Cancelar
+            button.btn.btn-primary(type='submit').d-none Guardar
+
+    // Listado de notas
+    if notes.length
+      .row
+        each note in notes
+          .col-md-4.mb-3
+            .card
+              .card-body
+                h5.card-title= note.title
+                p.card-text= note.content.substring(0, 100) + '...'
+                a.btn.btn-sm.btn-primary(href=`/notes/${note.id}`) Leer más
+    else
+      .alert.alert-info No hay notas disponibles. ¿Por qué no creas una?
+
+  script.
+    function expandNoteForm() {
+      const noteContent = document.getElementById('noteContent');
+      const noteActions = document.querySelector('.note-actions');
+      const saveButton = document.querySelector('.note-add-form button[type="submit"]');
+      const cancelButton = document.querySelector('.note-add-form button.btn-danger');
+      
+      noteContent.classList.remove('d-none');
+      noteActions.classList.remove('d-none');
+      saveButton.classList.remove('d-none');
+      cancelButton.classList.remove('d-none');
+    }
+
+    function addListItem() {
+      // Aquí puedes añadir la lógica para manejar la creación de un elemento de lista.
+      const noteContent = document.getElementById('noteContent');
+      if (noteContent.value.length > 0) {
+        noteContent.value += '\n';
+      }
+      noteContent.value += '- ';
+      noteContent.focus();
+    }
+
+    function cancelNoteCreation() {
+      // Restablece el formulario a su estado inicial
+      const noteForm = document.querySelector('.note-add-form');
+      noteForm.reset();
+      const noteContent = document.getElementById('noteContent');
+      const noteActions = document.querySelector('.note-actions');
+      const saveButton = document.querySelector('.note-add-form button[type="submit"]');
+      const cancelButton = document.querySelector('.note-add-form button.btn-danger');
+      
+      noteContent.classList.add('d-none');
+      noteActions.classList.add('d-none');
+      saveButton.classList.add('d-none');
+      cancelButton.classList.add('d-none');
+      document.getElementById('noteTitle').placeholder = 'Título de la nota';
+      document.getElementById('noteTitle').focus();
+    }
+
+  // Asegúrate de cargar Bootstrap Icons en tu archivo layout.pug
+  // <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">

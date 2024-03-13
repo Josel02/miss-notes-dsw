@@ -1,0 +1,15 @@
+extends ../layout
+
+block content
+  h1.mb-4 Crear Nueva Nota
+
+  form(method="POST", action="/notes")
+    .form-group.mb-3
+      label(for="title") Título
+      input#title.form-control(type="text", name="title", required=true, placeholder="Título de la nota")
+    
+    .form-group.mb-3
+      label(for="content") Contenido
+      textarea#content.form-control(name="content", required=true, rows="3", placeholder="Escribe el contenido aquí...")
+
+    button.btn.btn-primary(type="submit") Crear Nota

@@ -4,7 +4,7 @@ const Note = require('../models/note');
 exports.getAllNotes = async (req, res) => {
   try {
     const notes = await Note.findAll();
-    res.json(notes); // Ajusta esto para renderizar una vista si es necesario
+    res.render('notes/index', { notes: notes });
   } catch (error) {
     res.status(500).send(error.message);
   }
