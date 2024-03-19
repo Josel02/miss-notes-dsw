@@ -27,8 +27,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Usar rutas
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-// Incorporar las nuevas rutas para notas
 app.use('/notes', notesRouter);
+
+// Servir archivos estáticos de React en producción
+if (process.env.NODE_ENV === 'production') {
+  // Cambio 1: Ruta estática para los archivos construidos por React
+  app.use(express.static(path.join(__dirname, 'client/build')));
+  
+  // Cambio 2: Manejar cualquier solicitud que no coincida con las rutas anteriores para devolver el archivo index.html de React
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+}
 
 // Captura error 404 y lo pasa al manejador de errores
 app.use(function(req, res, next) {

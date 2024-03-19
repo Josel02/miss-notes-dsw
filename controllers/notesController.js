@@ -5,6 +5,7 @@ exports.getAllNotes = async (req, res) => {
   try {
     const notes = await Note.findAll();
     res.render('notes/index', { notes: notes });
+
   } catch (error) {
     res.status(500).send(error.message);
   }
