@@ -13,6 +13,9 @@ var notesRouter = require('./routes/notes');
 
 var app = express();
 
+const cors = require('cors');
+app.use(cors());
+
 // Configuración del motor de vistas
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
