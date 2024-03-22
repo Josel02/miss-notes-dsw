@@ -4,19 +4,23 @@ class Note {
   constructor(id, title, content, userId) {
     this.id = id;
     this.title = title;
-    this.content = content;
+    // Asegúrate de tratar el contenido como un objeto JavaScript al trabajar con la instancia de Note
+    this.content = typeof content === 'string' ? JSON.parse(content) : content;
     this.userId = userId;
   }
 
   // Crear una nueva nota
   static create(title, content, userId) {
     return new Promise((resolve, reject) => {
+      // Convertir el contenido de objeto JavaScript a cadena JSON para almacenamiento
+      const contentJson = JSON.stringify(content);
       const sql = `INSERT INTO notes (title, content, userId) VALUES (?, ?, ?)`;
-      db.run(sql, [title, content, userId], function(err) {
+      db.run(sql, [title, contentJson, userId], function(err) {
         if (err) {
           reject(err);
         } else {
-          resolve(new Note(this.lastID, title, content, userId));
+          // Asegúrate de convertir el contenido de vuelta a objeto para el objeto Note
+          resolve(new Note(this.lastID, title, JSON.parse(contentJson), userId));
         }
       });
     });
@@ -30,11 +34,22 @@ class Note {
         if (err) {
           reject(err);
         } else {
-          resolve(rows.map(row => new Note(row.id, row.title, row.content, row.userId)));
+          const notes = rows.map(row => {
+            let content;
+            try {
+              content = JSON.parse(row.content);
+            } catch (e) {
+              // Si no es JSON válido, envuélvelo en un objeto como texto plano
+              content = { text: row.content };
+            }
+            return new Note(row.id, row.title, content, row.userId);
+          });
+          resolve(notes);
         }
       });
     });
   }
+
 
   // Encontrar una nota por su ID
   static findById(id) {
@@ -44,7 +59,8 @@ class Note {
         if (err) {
           reject(err);
         } else {
-          resolve(row ? new Note(row.id, row.title, row.content, row.userId) : null);
+          // Convertir el contenido de cadena JSON a objeto para la nota
+          resolve(row ? new Note(row.id, row.title, JSON.parse(row.content), row.userId) : null);
         }
       });
     });
@@ -53,8 +69,10 @@ class Note {
   // Actualizar una nota existente
   static update(id, title, content) {
     return new Promise((resolve, reject) => {
+      // Convertir el contenido de objeto JavaScript a cadena JSON para almacenamiento
+      const contentJson = JSON.stringify(content);
       const sql = `UPDATE notes SET title = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
-      db.run(sql, [title, content, id], function(err) {
+      db.run(sql, [title, contentJson, id], function(err) {
         if (err) {
           reject(err);
         } else {
@@ -80,4 +98,3 @@ class Note {
 }
 
 module.exports = Note;
-
