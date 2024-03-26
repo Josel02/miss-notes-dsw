@@ -3,17 +3,20 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const cors = require('cors');
+const mongoose = require('mongoose');
 
-// Rutas existentes
+//Rutas de la aplicación
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-
-// Rutas nuevas
 var notesRouter = require('./routes/notes');
+
+mongoose.connect('mongodb://localhost/missnotes', { useNewUrlParser: true, 
+                                                  useUnifiedTopology: true });
+
 
 var app = express();
 
-const cors = require('cors');
 app.use(cors());
 
 // Configuración del motor de vistas
