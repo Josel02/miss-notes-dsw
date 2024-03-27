@@ -11,8 +11,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
 
-mongoose.connect('mongodb://localhost/missnotes', { useNewUrlParser: true, 
-                                                  useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost/missnotes');
 
 
 var app = express();
