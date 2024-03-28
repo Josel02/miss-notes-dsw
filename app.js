@@ -5,6 +5,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const axios = require('axios');
+
 
 //Rutas de la aplicación
 var indexRouter = require('./routes/index');
@@ -31,8 +33,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Usar rutas
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/notes', notesRouter);
+app.use('/users', usersRouter);
 
 // Servir archivos estáticos de React en producción
 if (process.env.NODE_ENV === 'production') {
