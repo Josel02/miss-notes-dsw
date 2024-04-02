@@ -2,7 +2,7 @@ const Friendship = require('../models/friendship');
 
 // Enviar una solicitud de amistad
 exports.sendFriendRequest = async (req, res) => {
-    const { requesterId, receiverId } = req.params;
+    const { requesterId, receiverId } = req.body; //Ahora los datos vienen en el cuerpo de la solicitud, no en la URL
     try {
       const existingRequest = await Friendship.findOne({
         $or: [
@@ -21,7 +21,7 @@ exports.sendFriendRequest = async (req, res) => {
         actionUser: 'Requester'
       });
       await newFriendship.save();
-      res.status(201).json({ message: 'Friend request sent.' });
+      res.status(201).json({ message: 'Friend request sent.', friendshipId: newFriendship._id });
     } catch (error) {
       res.status(500).json({ message: 'Error sending friend request: ' + error.message });
     }
