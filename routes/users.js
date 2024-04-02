@@ -18,9 +18,6 @@ router.put('/:id', userController.updateUser);
 // Eliminar un usuario
 router.delete('/:id', userController.deleteUser);
 
-// Añadir un amigo a un usuario
-router.post('/:userId/friends/:friendId', userController.addFriend);
-
 
 
 module.exports = router;

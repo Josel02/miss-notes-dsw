@@ -1,4 +1,4 @@
-const Friendship = require('../models/Friendship');
+const Friendship = require('../models/friendship');
 
 // Enviar una solicitud de amistad
 exports.sendFriendRequest = async (req, res) => {
