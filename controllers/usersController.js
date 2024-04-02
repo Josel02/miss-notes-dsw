@@ -1,5 +1,6 @@
 const User = require('../models/user');
-const mongoose = require('mongoose');
+//const mongoose = require('mongoose');
+const Friendship = require('../models/friendship');
 
 exports.createUser = async (req, res) => {
   try {
@@ -57,51 +58,9 @@ exports.deleteUser = async (req, res) => {
 };
 
 
-// Añadir aquí más operaciones según sea necesario, por ejemplo, para aceptar solicitudes de amistad, eliminar amigos, etc.
-exports.addFriend = async (req, res) => {
-  const { userId, friendId } = req.params;
-  const session = await mongoose.startSession();
-  try {
-    session.startTransaction();
-    // Usuario que envía la solicitud
-    const requesterUser = await User.findById(userId).session(session);
-    // Usuario que recibe la solicitud
-    const receiverUser = await User.findById(friendId).session(session);
 
-    const alreadyRequested = requesterUser.friends.some(friend => friend.userId.toString() === friendId);
-    const alreadyReceived = receiverUser.friends.some(friend => friend.userId.toString() === userId);
 
-    if (!alreadyRequested && !alreadyReceived) {
-      // Añade la solicitud al usuario que la envía
-      requesterUser.friends.push({
-        userId: friendId,
-        status: 'Requested',
-        requestDate: new Date(),
-        actionUser: 'Requester'
-      });
 
-      // Añade la solicitud al usuario que la recibe
-      receiverUser.friends.push({
-        userId: userId,
-        status: 'Requested',
-        requestDate: new Date(),
-        actionUser: 'Receiver'
-      });
 
-      await requesterUser.save({ session });
-      await receiverUser.save({ session });
 
-      await session.commitTransaction();
-      res.status(200).json({ message: 'Friend request sent and received.' });
-    } else {
-      await session.abortTransaction();
-      res.status(400).json({ message: 'Friend request already exists or friend already added.' });
-    }
-  } catch (error) {
-    await session.abortTransaction();
-    res.status(500).json({ message: 'Error managing friend request: ' + error.message });
-  } finally {
-    session.endSession();
-  }
-};
 

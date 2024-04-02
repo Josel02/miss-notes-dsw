@@ -12,6 +12,7 @@ const axios = require('axios');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
+var friendsRouter = require('./routes/friends');
 
 mongoose.connect('mongodb://localhost/missnotes');
 
@@ -35,6 +36,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/notes', notesRouter);
 app.use('/users', usersRouter);
+app.use('/friends', friendsRouter);
 
 // Servir archivos estáticos de React en producción
 if (process.env.NODE_ENV === 'production') {
