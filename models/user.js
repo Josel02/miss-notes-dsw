@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['Requested', 'Accepted', 'Denied', 'Revoked'] },
     requestDate: Date,
-    responseDate: Date
+    responseDate: Date,
+    actionUser: { type: String, enum: ['Requester', 'Receiver'] } // Nuevo campo agregado
   }]
 });
 

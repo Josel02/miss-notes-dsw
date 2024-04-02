@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "nodemon ./bin/www",
+    "dev": "./init-mongo-replicaset.sh",
     "test": "jest"
   },
   "dependencies": {
