@@ -1,69 +1,56 @@
 const Note = require('../models/note');
 
-// Obtener todas las notas
-exports.getAllNotes = async (req, res) => {
+exports.createNote = async (req, res) => {
   try {
-    const notes = await Note.findAll();
-    res.json(notes);
-
+    const newNote = new Note({
+      ...req.body,
+    });
+    const savedNote = await newNote.save();
+    res.status(201).json(savedNote);
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(400).json({ message: 'Error creating note: ' + error.message });
   }
 };
 
-// Obtener una nota por ID
-exports.getNoteById = async (req, res) => {
+exports.getAllNotes = async (req, res) => {
   try {
-    const { id } = req.params;
+    const notes = await Note.find();
+    res.status(200).json(notes);
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting the notes: ' + error.message });
+  }
+};
+
+exports.updateNote = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updatedNote = await Note.findByIdAndUpdate(id, req.body, { new: true });
+    res.status(200).json(updatedNote);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating the note: ' + error.message });
+  }
+};
+
+exports.getNoteById = async (req, res) => {
+  const { id } = req.params;
+  try {
     const note = await Note.findById(id);
     if (note) {
       res.json(note);
     } else {
-      res.status(404).send("Nota no encontrada");
+      res.status(404).json({ message: 'Note no encontrada' });
     }
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Crear una nueva nota
-exports.createNote = async (req, res) => {
-  try {
-    const { title, content, userId } = req.body;
-    const newNote = await Note.create(title, content, userId);
-    res.status(201).json(newNote);
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-};
-
-// Actualizar una nota existente
-exports.updateNote = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, content } = req.body;
-    const updateResult = await Note.update(id, title, content);
-    if (updateResult) {
-      res.json({ message: "Nota actualizada correctamente" });
-    } else {
-      res.status(404).send("Nota no encontrada");
-    }
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-};
-
-// Eliminar una nota
 exports.deleteNote = async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
-    const deleteResult = await Note.delete(id);
-    if (deleteResult) {
-      res.json({ message: "Nota eliminada correctamente" });
-    } else {
-      res.status(404).send("Nota no encontrada");
-    }
+    await Note.findByIdAndDelete(id);
+    res.status(204).send();
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ message: 'Error deleting the note: ' + error.message });
   }
 };

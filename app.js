@@ -3,17 +3,22 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const axios = require('axios');
 
-// Rutas existentes
+
+//Rutas de la aplicación
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-
-// Rutas nuevas
 var notesRouter = require('./routes/notes');
+var friendsRouter = require('./routes/friends');
+
+mongoose.connect('mongodb://localhost/missnotes');
+
 
 var app = express();
 
-const cors = require('cors');
 app.use(cors());
 
 // Configuración del motor de vistas
@@ -29,8 +34,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Usar rutas
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/notes', notesRouter);
+app.use('/users', usersRouter);
+app.use('/friends', friendsRouter);
 
 // Servir archivos estáticos de React en producción
 if (process.env.NODE_ENV === 'production') {
