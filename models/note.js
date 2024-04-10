@@ -34,7 +34,7 @@ const contentSchema = new Schema({
     ref: 'Image',
     required: function() { return this.type === 'image'; }, // Condición simplificada
   }
-}, { _id: false });
+});
 
 const noteSchema = new Schema({
   title: { type: String, required: true },
