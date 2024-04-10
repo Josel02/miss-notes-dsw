@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -14,7 +16,8 @@ var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
 var friendsRouter = require('./routes/friends');
 
-mongoose.connect('mongodb://localhost/missnotes');
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/missnotes');
+
 
 
 var app = express();
