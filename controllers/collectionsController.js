@@ -5,7 +5,7 @@ const Note = require('../models/note');
 exports.createCollection = async (req, res) => {
   try {
     const { name, notes } = req.body;
-    const userId = req.user._id; // Asumiendo que tienes un middleware que añade el usuario al request
+    const userId = req.user.userId; // Cambiado de req.user._id a req.user.userId para coincidir con el payload del JWT
     const newCollection = new Collection({
       name,
       userId,
@@ -21,7 +21,7 @@ exports.createCollection = async (req, res) => {
 // Obtener todas las colecciones de un usuario
 exports.getCollectionsByUser = async (req, res) => {
   try {
-    const userId = req.user._id; // Asumiendo autenticación
+    const userId = req.user.userId; // Asumiendo autenticación
     const collections = await Collection.find({ userId }).populate('notes');
     res.status(200).json(collections);
   } catch (error) {
