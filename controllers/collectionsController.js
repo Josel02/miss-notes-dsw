@@ -5,7 +5,7 @@ const Note = require('../models/note');
 exports.createCollection = async (req, res) => {
   try {
     const { name, notes } = req.body;
-    const userId = req.user.userId; // Cambiado de req.user._id a req.user.userId para coincidir con el payload del JWT
+    const userId = req.user.userId; // Asegurándose de que el userId coincide con el payload del JWT
     const newCollection = new Collection({
       name,
       userId,
@@ -18,11 +18,15 @@ exports.createCollection = async (req, res) => {
   }
 };
 
-// Obtener todas las colecciones de un usuario
+// Obtener todas las colecciones de un usuario, incluyendo el contenido completo de las notas
 exports.getCollectionsByUser = async (req, res) => {
   try {
-    const userId = req.user.userId; // Asumiendo autenticación
-    const collections = await Collection.find({ userId }).populate('notes');
+    const userId = req.user.userId;
+    const collections = await Collection.find({ userId })
+      .populate({
+        path: 'notes',
+        select: 'title content userId', // Ajustar para incluir campos específicos
+      });
     res.status(200).json(collections);
   } catch (error) {
     res.status(500).json({ message: 'Error getting collections: ' + error.message });
@@ -51,11 +55,15 @@ exports.deleteCollection = async (req, res) => {
   }
 };
 
-// Obtener una colección por ID
+// Obtener una colección por ID, mostrando el contenido completo de las notas
 exports.getCollectionById = async (req, res) => {
   const { id } = req.params;
   try {
-    const collection = await Collection.findById(id).populate('notes');
+    const collection = await Collection.findById(id)
+      .populate({
+        path: 'notes',
+        select: 'title content userId' // Asegurándose de incluir el contenido completo
+      });
     if (collection) {
       res.json(collection);
     } else {
@@ -65,47 +73,42 @@ exports.getCollectionById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 // Añadir una nota a una colección existente
 exports.addNoteToCollection = async (req, res) => {
-    const { collectionId, noteId } = req.params; // ID de la colección y de la nota desde los parámetros de la ruta
-  
-    try {
-      // Buscar la colección por ID
-      const collection = await Collection.findById(collectionId);
-      if (!collection) {
-        return res.status(404).json({ message: 'Collection not found' });
-      }
-  
-      // Verificar si la nota ya está en la colección
-      const noteExists = collection.notes.some(note => note.equals(noteId));
-      if (noteExists) {
-        return res.status(400).json({ message: 'Note already exists in this collection' });
-      }
-  
-      // Añadir la nota a la colección
-      collection.notes.push(noteId);
-      const updatedCollection = await collection.save();
-  
-      res.status(200).json(updatedCollection);
-    } catch (error) {
-      res.status(500).json({ message: 'Error adding note to collection: ' + error.message });
+  const { collectionId, noteId } = req.params;
+  try {
+    const collection = await Collection.findById(collectionId);
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found' });
     }
-  };
+    const noteExists = collection.notes.some(note => note.equals(noteId));
+    if (noteExists) {
+      return res.status(400).json({ message: 'Note already exists in this collection' });
+    }
+    collection.notes.push(noteId);
+    const updatedCollection = await collection.save();
+    res.status(200).json(updatedCollection);
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding note to collection: ' + error.message });
+  }
+};
 
-// Función para obtener todas las colecciones que contienen una nota específica
+// Función para obtener todas las colecciones que contienen una nota específica, mostrando el contenido completo de las notas
 exports.getCollectionsContainingNote = async (req, res) => {
-    const { noteId } = req.params; // Asumiendo que el ID de la nota viene como parámetro en la ruta
-  
-    try {
-      const collectionsContainingNote = await Collection.find({ notes: noteId }).populate('notes');
-      if (collectionsContainingNote.length > 0) {
-        res.status(200).json(collectionsContainingNote);
-      } else {
-        res.status(404).json({ message: 'No collections found containing the specified note' });
-      }
-    } catch (error) {
-      res.status(500).json({ message: 'Error finding collections: ' + error.message });
+  const { noteId } = req.params;
+  try {
+    const collectionsContainingNote = await Collection.find({ notes: noteId })
+      .populate({
+        path: 'notes',
+        select: 'title content userId' // Ajustar para incluir campos específicos
+      });
+    if (collectionsContainingNote.length > 0) {
+      res.status(200).json(collectionsContainingNote);
+    } else {
+      res.status(404).json({ message: 'No collections found containing the specified note' });
     }
-  };
-
-  
+  } catch (error) {
+    res.status(500).json({ message: 'Error finding collections: ' + error.message });
+  }
+};
