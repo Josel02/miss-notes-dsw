@@ -15,6 +15,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
 var friendsRouter = require('./routes/friends');
+var collectionsRouter = require('./routes/collections');
 
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/missnotes');
 
@@ -40,6 +41,7 @@ app.use('/', indexRouter);
 app.use('/notes', notesRouter);
 app.use('/users', usersRouter);
 app.use('/friends', friendsRouter);
+app.use('/collections', collectionsRouter);
 
 // Servir archivos estáticos de React en producción
 if (process.env.NODE_ENV === 'production') {
