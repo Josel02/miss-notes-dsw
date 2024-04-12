@@ -54,3 +54,14 @@ exports.deleteNote = async (req, res) => {
     res.status(500).json({ message: 'Error deleting the note: ' + error.message });
   }
 };
+
+//Obtener todas las notas de un usuario
+exports.getNotesByUser = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notes = await Note.find({ userId });
+    res.status(200).json(notes);
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting notes: ' + error.message });
+  }
+};
