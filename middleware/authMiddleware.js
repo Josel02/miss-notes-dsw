@@ -7,24 +7,27 @@ const verifyTokenAndRole = (requiredRole = null) => {
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
         if (!token) {
+            console.log("No token provided.");
             return res.status(401).json({ message: 'Acceso denegado. No se proporcionó token.' });
         }
 
         jwt.verify(token, SECRET_KEY, (err, user) => {
             if (err) {
+                console.log("Invalid or expired token.");
                 return res.status(403).json({ message: 'Token no válido o expirado.' });
             }
 
-            // Si se especificó un rol requerido, verificar que el usuario tenga ese rol
             if (requiredRole && user.role !== requiredRole) {
+                console.log("User role is not sufficient.");
                 return res.status(403).json({ message: 'No tienes permiso para realizar esta acción.' });
             }
 
-            // Si todo está correcto, agregar el usuario al request para su uso posterior
+            console.log("User verified successfully.");
             req.user = user;
             next();
         });
     };
 };
+
 
 module.exports = verifyTokenAndRole;

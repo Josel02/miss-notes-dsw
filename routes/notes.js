@@ -19,6 +19,13 @@ router.put('/:id', notesController.updateNote);
 router.delete('/:id', notesController.deleteNote);
 
 // Obtener todas las notas de un usuario
-router.get('/user', verifyTokenAndRole(), notesController.getNotesByUser);
+// Si esperas recibir un userId en la ruta, debería ser algo así:
+router.get('/users/:userId', verifyTokenAndRole(), (req, res, next) => {
+    console.log("Middleware passed, userId:", req.params.userId);
+    notesController.getNotesByUser(req, res, next);
+});
+
+// Si la intención era hacer que 'userssss' fuera un nombre de ruta estático, asegúrate de que el controlador maneje esto correctamente
+
 
 module.exports = router;
