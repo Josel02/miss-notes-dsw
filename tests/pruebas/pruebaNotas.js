@@ -6,32 +6,29 @@ const apiBase = axios.create({
 });
 
 let authToken;
-let userId;
 
 // Registrar e iniciar sesión con un usuario de prueba
 async function registerAndLogin() {
   console.log("----- REGISTRO E INICIO DE SESIÓN -----")
-try {
-  // Registro
-  let response = await apiBase.post('/users/register', {
-    name: "Test User",
-    email: "testuser@example.com",
-    password: "password123",
-  });
-  console.log('Usuario registrado:', response.data);
+  try {
+    // Registro
+    let response = await apiBase.post('/users/register', {
+      name: "Test User",
+      email: "testuser@example.com",
+      password: "password123",
+    });
+    console.log('Usuario registrado:', response.data);
 
-
-  // Inicio de sesión
-  response = await apiBase.post('/users/login', {
-    email: "testuser@example.com",
-    password: "password123",
-  });
-  console.log('Inicio de sesión exitoso:', response.data);
-  authToken = response.data.token;
-  userId = response.data.userId; 
-} catch (error) {
-  console.error('Error registrando o iniciando sesión:', error.response ? error.response.data : error.message);
-}
+    // Inicio de sesión
+    response = await apiBase.post('/users/login', {
+      email: "testuser@example.com",
+      password: "password123",
+    });
+    console.log('Inicio de sesión exitoso:', response.data);
+    authToken = response.data.token;
+  } catch (error) {
+    console.error('Error registrando o iniciando sesión:', error.response ? error.response.data : error.message);
+  }
 }
 
 // Crear dos notas
@@ -47,7 +44,6 @@ async function createNotes() {
                     type: 'text', 
                     data: [`Contenido de ${title}`]
                 }], 
-                userId, 
             }, {
                 headers: { Authorization: `Bearer ${authToken}` },
             });
@@ -63,11 +59,10 @@ async function createNotes() {
 // Obtener todas las notas del usuario
 async function getNotes() {
     console.log("\n----- OBTENCIÓN DE NOTAS DEL USUARIO -----")
-    console.log('authToken:', authToken)
     try {
-      const response = await apiBase.get(`/notes/users/${userId}`, {  // Usar template string para insertar el userId
+      const response = await apiBase.get('/notes/user', {
         headers: { Authorization: `Bearer ${authToken}` },
-    });
+      });
     
         console.log('Notas del usuario:', response.data);
         return response.data;
@@ -83,7 +78,7 @@ async function runTestScript() {
     return;
   }
 
-  await createNotes();
+  const notesIds = await createNotes();
   await getNotes();
 }
 
