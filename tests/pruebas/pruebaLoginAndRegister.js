@@ -5,9 +5,8 @@ const api = axios.create({
   baseURL: 'http://localhost:3000/users', // Ajusta según tu configuración
 });
 
-// Guarda el token y el userId aquí para usarlos en solicitudes subsiguientes
+// Guarda el token aquí para usarlo en solicitudes subsiguientes
 let authToken;
-let userId;
 
 async function registerUser() {
   try {
@@ -17,7 +16,6 @@ async function registerUser() {
       password: "password123",
     });
     console.log('Registro exitoso:', response.data);
-    userId = response.data._id; // Guarda el userId para uso posterior
   } catch (error) {
     console.error('Error en el registro:', error.response ? error.response.data : error.message);
   }
@@ -38,7 +36,7 @@ async function loginUser() {
 
 async function getUserById() {
   try {
-    const response = await api.get(`/${userId}`, {
+    const response = await api.get('/me', { // Acceder al perfil del usuario autenticado
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -51,7 +49,7 @@ async function getUserById() {
 
 async function updateUser() {
   try {
-    const response = await api.put(`/${userId}`, {
+    const response = await api.put('/me', { // Actualizar al usuario autenticado
       name: "Updated User",
       email: "updateduser@example.com",
     }, {
@@ -67,7 +65,7 @@ async function updateUser() {
 
 async function deleteUser() {
   try {
-    const response = await api.delete(`/${userId}`, {
+    const response = await api.delete('/me', { // Eliminar al usuario autenticado
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -78,40 +76,18 @@ async function deleteUser() {
   }
 }
 
-async function testProtectedRoute() {
-  try {
-    // Asegúrate de reemplazar '/ruta-protegida' con el endpoint real de una ruta protegida
-    const response = await api.get('/ruta-protegida', {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
-    console.log('Respuesta de la ruta protegida:', response.data);
-  } catch (error) {
-    console.error('Error accediendo a la ruta protegida:', error.response ? error.response.data : error.message);
-  }
-}
-
 async function testAuthFlow() {
   console.log('Iniciando prueba de registro...');
   await registerUser();
 
-  if (userId) {
-    console.log('Iniciando prueba de inicio de sesión...');
-    await loginUser();
+  console.log('Iniciando prueba de inicio de sesión...');
+  await loginUser();
 
-    if (authToken) {
-      console.log('Probando CRUD de usuarios con el usuario recién registrado...');
-      await getUserById(); // Ahora usa el userId dinámico
-      await updateUser(); // Actualiza este usuario
-      await deleteUser(); // Borra este usuario
-
-      /*
-      console.log('Probando acceso a ruta protegida...');
-      await testProtectedRoute();
-      */
-     //TODO: Revisar rutas protegidas
-    }
+  if (authToken) {
+    console.log('Probando CRUD de usuarios con el usuario recién registrado...');
+    await getUserById(); // Obtener el perfil del usuario autenticado
+    await updateUser(); // Actualizar el perfil del usuario autenticado
+    await deleteUser(); // Borrar el usuario autenticado
   }
 }
 
