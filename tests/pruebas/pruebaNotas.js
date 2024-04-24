@@ -11,13 +11,17 @@ let authToken;
 async function registerAndLogin() {
   console.log("----- REGISTRO E INICIO DE SESIÓN -----")
   try {
+    let response;
+    
+    /*
     // Registro
-    let response = await apiBase.post('/users/register', {
+    response = await apiBase.post('/users/register', {
       name: "Test User",
       email: "testuser@example.com",
       password: "password123",
     });
     console.log('Usuario registrado:', response.data);
+    */
 
     // Inicio de sesión
     response = await apiBase.post('/users/login', {
