@@ -1,4 +1,5 @@
 const Note = require('../models/note');
+const Collection = require('../models/collection');
 
 exports.createNote = async (req, res) => {
   try {
@@ -72,6 +73,30 @@ exports.getNotesByUser = async (req, res) => {
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Error getting notes: ' + error.message });
+  }
+};
+
+// Actualizar las colecciones de una nota
+exports.updateNoteCollections = async (req, res) => {
+  const { noteId } = req.params;
+  const { collections } = req.body; // Array de IDs de colecciones
+  try {
+    const note = await Note.findById(noteId);
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found' });
+    }
+    // Actualizar las colecciones que incluyen esta nota
+    await Collection.updateMany(
+      { notes: { $in: [noteId] } },
+      { $pull: { notes: noteId } } // Remueve la nota de colecciones donde ya no debe estar
+    );
+    await Collection.updateMany(
+      { _id: { $in: collections } },
+      { $addToSet: { notes: noteId } } // Agrega la nota a las nuevas colecciones
+    );
+    res.status(200).json({ message: 'Collections updated' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating collections: ' + error.message });
   }
 };
 
