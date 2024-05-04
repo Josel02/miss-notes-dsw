@@ -112,3 +112,29 @@ exports.getCollectionsContainingNote = async (req, res) => {
     res.status(500).json({ message: 'Error finding collections: ' + error.message });
   }
 };
+
+//Función para añadir una lista de notas a una colección
+exports.addNotesToCollection = async (req, res) => {
+  const { collectionId } = req.params;
+  const { noteIds } = req.body;  // Un arreglo de IDs de notas
+
+  try {
+    const collection = await Collection.findById(collectionId);
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found' });
+    }
+
+    // Filtrar y añadir solo aquellas notas que no estén ya en la colección
+    const uniqueNoteIds = noteIds.filter(noteId => !collection.notes.includes(noteId));
+
+    if (uniqueNoteIds.length > 0) {
+      collection.notes.push(...uniqueNoteIds);
+      const updatedCollection = await collection.save();
+      res.status(200).json(updatedCollection);
+    } else {
+      res.status(400).json({ message: 'No new notes to add or notes already exist in the collection' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding notes to collection: ' + error.message });
+  }
+};

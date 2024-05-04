@@ -6,28 +6,24 @@ const apiBase = axios.create({
 });
 
 let authToken;
-let userId;
 
 // Registrar e iniciar sesión con un usuario de prueba
 async function registerAndLogin() {
-    console.log("----- REGISTRO E INICIO DE SESIÓN -----")
+  console.log("----- REGISTRO E INICIO DE SESIÓN -----")
   try {
-    let response;
-
-    /*
     // Registro
-    response = await apiBase.post('/users/register', {
+    /*
+      response = await apiBase.post('/users/register', {
       name: "Test User",
       email: "testuser@example.com",
       password: "password123",
     });
     console.log('Usuario registrado:', response.data);
     userId = response.data._id; 
-
     */
 
     // Inicio de sesión
-    response = await apiBase.post('/users/login', {
+    const response = await apiBase.post('/users/login', {
       email: "testuser@example.com",
       password: "password123",
     });
@@ -79,21 +75,21 @@ async function createNotes() {
   }
 }
 
-// Función para actualizar las colecciones de una nota
-async function updateNoteCollections(noteId, collectionIds) {
-  console.log("\n----- ACTUALIZACIÓN DE COLECCIONES PARA UNA NOTA -----");
-  console.log("Note ID being sent:", noteId);
-  console.log("Collection IDs being sent:", collectionIds);
+// Añadir múltiples notas a una colección específica
+async function addNotesToCollection(collectionId, noteIds) {
+  console.log("\n----- AÑADIENDO MÚLTIPLES NOTAS A UNA COLECCIÓN -----");
+  console.log("Collection ID being sent:", collectionId);
+  console.log("Note IDs being sent:", noteIds);
 
   try {
-    const response = await apiBase.put(`/notes/${noteId}/collections`, {
-      collections: collectionIds
+    const response = await apiBase.put(`/collections/${collectionId}/notes/add`, {
+      noteIds
     }, {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    console.log(`Colecciones actualizadas para la nota ${noteId}:`, response.data);
+    console.log(`Notas añadidas a la colección ${collectionId}:`, response.data);
   } catch (error) {
-    console.error('Error actualizando colecciones de la nota:', error.response ? error.response.data : error.message);
+    console.error('Error añadiendo notas a la colección:', error.response ? error.response.data : error.message);
   }
 }
 
@@ -105,10 +101,10 @@ async function runTestScript() {
   }
 
   const collections = await createCollections();
-  const noteIds = await createNotes();
-  if (collections.length > 1 && noteIds.length > 0) {
-    await updateNoteCollections(noteIds[0]._id, [collections[0]._id, collections[1]._id]); // Asignar nota 1 a colección 1 y 2
-    await updateNoteCollections(noteIds[1]._id, [collections[1]._id]); // Asignar nota 2 solo a colección 2
+  const notes = await createNotes();
+  if (collections.length > 0 && notes.length > 0) {
+    const noteIds = notes.map(note => note._id);
+    await addNotesToCollection(collections[0]._id, noteIds); // Asignar todas las notas a la primera colección
   }
 }
 
