@@ -113,7 +113,7 @@ exports.getCollectionsContainingNote = async (req, res) => {
   }
 };
 
-//Función para añadir una lista de notas a una colección
+// Función para ajustar la lista de notas de una colección
 exports.addNotesToCollection = async (req, res) => {
   const { collectionId } = req.params;
   const { noteIds } = req.body;  // Un arreglo de IDs de notas
@@ -124,17 +124,31 @@ exports.addNotesToCollection = async (req, res) => {
       return res.status(404).json({ message: 'Collection not found' });
     }
 
-    // Filtrar y añadir solo aquellas notas que no estén ya en la colección
-    const uniqueNoteIds = noteIds.filter(noteId => !collection.notes.includes(noteId));
+    // Convertir ambas listas de notas a conjuntos para facilitar comparaciones
+    const currentNoteIdsSet = new Set(collection.notes.map(note => note.toString()));
+    const newNoteIdsSet = new Set(noteIds);
 
-    if (uniqueNoteIds.length > 0) {
-      collection.notes.push(...uniqueNoteIds);
-      const updatedCollection = await collection.save();
-      res.status(200).json(updatedCollection);
-    } else {
-      res.status(400).json({ message: 'No new notes to add or notes already exist in the collection' });
+    // Filtrar para encontrar notas que no estén en la nueva lista y deben ser eliminadas
+    const notesToRemove = Array.from(currentNoteIdsSet).filter(id => !newNoteIdsSet.has(id));
+
+    // Filtrar para encontrar nuevas notas que no estén en la colección actual
+    const notesToAdd = Array.from(newNoteIdsSet).filter(id => !currentNoteIdsSet.has(id));
+
+    // Si hay notas para eliminar, quitarlas
+    if (notesToRemove.length > 0) {
+      collection.notes = collection.notes.filter(note => !notesToRemove.includes(note.toString()));
     }
+
+    // Si hay notas nuevas para añadir, añadirlas
+    if (notesToAdd.length > 0) {
+      collection.notes.push(...notesToAdd);
+    }
+
+    // Guardar los cambios en la base de datos
+    const updatedCollection = await collection.save();
+    res.status(200).json(updatedCollection);
   } catch (error) {
-    res.status(500).json({ message: 'Error adding notes to collection: ' + error.message });
+    res.status(500).json({ message: 'Error updating the collection with new notes: ' + error.message });
   }
 };
+
