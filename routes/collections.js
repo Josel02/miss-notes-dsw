@@ -2,6 +2,13 @@ const express = require('express');
 const router = express.Router();
 const collectionsController = require('../controllers/collectionsController'); // Ajusta la ruta según donde tengas tu controlador
 const verifyTokenAndRole = require('../middleware/authMiddleware');
+
+// Ruta para añadir múltiples notas a una colección
+router.put('/:collectionId/notes/add', verifyTokenAndRole(), collectionsController.addNotesToCollection);
+
+// Añadir una nota a una colección
+router.put('/:collectionId/note/:noteId', verifyTokenAndRole(), collectionsController.addNoteToCollection);
+
 // Crear una nueva colección
 router.post('/', verifyTokenAndRole(), collectionsController.createCollection);
 
@@ -16,9 +23,6 @@ router.put('/:id', verifyTokenAndRole(), collectionsController.updateCollection)
 
 // Eliminar una colección
 router.delete('/:id', verifyTokenAndRole(), collectionsController.deleteCollection);
-
-// Añadir una nota a una colección
-router.put('/:collectionId/note/:noteId', verifyTokenAndRole(), collectionsController.addNoteToCollection);
 
 // Ruta para obtener colecciones que contienen una nota específica
 router.get('/note/:noteId/collections', verifyTokenAndRole(), collectionsController.getCollectionsContainingNote);

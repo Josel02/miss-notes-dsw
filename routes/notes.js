@@ -4,6 +4,11 @@ const notesController = require('../controllers/notesController');
 const verifyTokenAndRole = require('../middleware/authMiddleware');
 
 // Definir primero rutas específicas antes de rutas con parámetros
+
+//Ruta para actualizar las colecciones de una nota
+router.put('/:noteId/collections', verifyTokenAndRole(), notesController.updateNoteCollections);
+
+//Ruta para obtener todas las notas de un usuario
 router.get('/user', verifyTokenAndRole(), notesController.getNotesByUser);
 
 // Obtener una nota por su ID
