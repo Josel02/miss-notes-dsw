@@ -40,6 +40,33 @@ exports.getUserById = async (req, res) => {
   }
 };
 
+exports.updateUserByAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { name, email, role } = req.body;
+
+    try {
+        // Buscar el usuario por ID y asegurarse de que existe
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+
+        // Actualizar los campos permitidos
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (role) user.role = role;
+
+        // Guardar el usuario actualizado
+        await user.save();
+
+        // Devolver una respuesta exitosa
+        res.status(200).json({ message: 'Usuario actualizado con éxito.', user });
+    } catch (error) {
+        console.error('Error al actualizar el usuario:', error);
+        res.status(500).json({ message: 'Error al actualizar el usuario.' });
+    }
+};
+
 exports.updateUser = async (req, res) => {
   try {
     // Actualizar el usuario autenticado utilizando el ID del token
