@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
-
 const { Schema, model } = mongoose;
 
-// Utilizamos una función para determinar si 'data' es requerido, para no repetirla.
-const isDataRequired = function() { return this.type !== 'image'; };
+// Modificación para hacer 'data' requerido para todos los tipos, incluyendo imágenes.
+const isDataRequired = function() {
+  return true;  // Ahora siempre se requiere 'data', independientemente del tipo.
+};
 
 // Validador para 'checked list' como función para mejorar la legibilidad.
 const validateCheckedList = (value) => {
@@ -18,22 +19,21 @@ const contentSchema = new Schema({
   type: { type: String, enum: ['text', 'list', 'checked list', 'image'], required: true },
   data: [{
     type: Schema.Types.Mixed,
-    required: isDataRequired, // Simplificación del requerimiento condicional
+    required: isDataRequired,  // Data ahora es siempre requerido.
     validate: {
       validator: function(value) {
         if (this.type === 'checked list') {
           return validateCheckedList(value);
         }
+        if (this.type === 'image') {
+          // Verifica que el valor sea una cadena no vacía para imágenes.
+          return typeof value === 'string' && value.trim().length > 0;
+        }
         return true;
       },
-      message: 'Invalid data for checked list.'
+      message: 'Invalid data for content type.'
     }
-  }],
-  imageId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Image',
-    required: function() { return this.type === 'image'; }, // Condición simplificada
-  }
+  }]
 });
 
 const noteSchema = new Schema({
