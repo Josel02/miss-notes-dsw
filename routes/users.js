@@ -18,6 +18,9 @@ router.put('/me', verifyTokenAndRole(), userController.updateUser);
 // Eliminar un usuario - Eliminar al usuario autenticado
 router.delete('/me', verifyTokenAndRole(), userController.deleteUser);
 
+// Verificar rol de usuario
+router.get('/check-role', verifyTokenAndRole(), userController.checkUserRole);
+
 // Registrar un nuevo usuario
 router.post('/register', userController.registerUser);
 

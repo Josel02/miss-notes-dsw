@@ -26,7 +26,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-
 exports.getUserById = async (req, res) => {
   try {
     // Obtener el ID del usuario del token decodificado
@@ -60,6 +59,15 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: 'Error deleting the user: ' + error.message });
   }
 };
+
+exports.checkUserRole = (req, res) => {
+  if (!req.user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+  }
+  const isAdmin = req.user.role === 'Admin';
+  res.status(200).json({ isAdmin });
+};
+
 
 exports.registerUser = async (req, res) => {
   try {
