@@ -7,7 +7,7 @@ const verifyTokenAndRole = require('../middleware/authMiddleware');
 router.post('/', userController.createUser);
 
 // Obtener todos los usuarios
-router.get('/', userController.getAllUsers);
+router.get('/', verifyTokenAndRole("Admin"), userController.getAllUsers);
 
 // Obtener un usuario por ID - Este ID es el del usuario autenticado
 router.get('/me', verifyTokenAndRole(), userController.getUserById);
