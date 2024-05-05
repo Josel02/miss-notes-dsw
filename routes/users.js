@@ -9,6 +9,9 @@ router.post('/', userController.createUser);
 // Actualizar un usuario por ID - Solo para Admins
 router.put('/:id', verifyTokenAndRole("Admin"), userController.updateUserByAdmin);
 
+// Eliminar un usuario por ID - Solo para Admins
+router.delete('/:id', verifyTokenAndRole("Admin"), userController.deleteUserByAdmin);
+
 // Obtener todos los usuarios
 router.get('/', verifyTokenAndRole("Admin"), userController.getAllUsers);
 

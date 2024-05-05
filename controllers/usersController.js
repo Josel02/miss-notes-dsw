@@ -40,6 +40,19 @@ exports.getUserById = async (req, res) => {
   }
 };
 
+exports.deleteUserByAdmin = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedUser = await User.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting the user: ' + error.message });
+  }
+};
+
 exports.updateUserByAdmin = async (req, res) => {
     const { id } = req.params;
     const { name, email, role } = req.body;
@@ -56,10 +69,8 @@ exports.updateUserByAdmin = async (req, res) => {
         if (email) user.email = email;
         if (role) user.role = role;
 
-        // Guardar el usuario actualizado
         await user.save();
 
-        // Devolver una respuesta exitosa
         res.status(200).json({ message: 'Usuario actualizado con éxito.', user });
     } catch (error) {
         console.error('Error al actualizar el usuario:', error);
