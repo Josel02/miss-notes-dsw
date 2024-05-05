@@ -18,8 +18,8 @@ exports.createUser = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    // Selecciona todos los campos excepto el hash de la contraseña
-    const users = await User.find().select('-passwordHash');
+    // Excluye al usuario que realiza la petición utilizando su userId
+    const users = await User.find({ _id: { $ne: req.user.userId } }).select('-passwordHash');
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error getting the users: ' + error.message });
