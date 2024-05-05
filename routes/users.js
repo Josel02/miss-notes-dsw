@@ -24,4 +24,8 @@ router.post('/register', userController.registerUser);
 // Iniciar sesión
 router.post('/login', userController.loginUser);
 
+// Cambiar contraseña del usuario autenticado
+router.post('/me/change-password', verifyTokenAndRole(), userController.changePassword);
+
+
 module.exports = router;

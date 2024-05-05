@@ -103,3 +103,28 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ message: 'Error in login: ' + error.message });
   }
 };
+
+exports.changePassword = async (req, res) => {
+  try {
+      const { currentPassword, newPassword } = req.body;
+      const user = await User.findById(req.user.userId);
+      
+      if (!user) {
+          return res.status(404).json({ message: 'Usuario no encontrado.' });
+      }
+      
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isMatch) {
+          return res.status(401).json({ message: 'La contraseña actual no es correcta.' });
+      }
+      
+      const newHashedPassword = await bcrypt.hash(newPassword, 10);
+      user.passwordHash = newHashedPassword;
+      await user.save();
+      
+      res.status(200).json({ message: 'Contraseña actualizada con éxito.' });
+  } catch (error) {
+      res.status(500).json({ message: 'Error al cambiar la contraseña: ' + error.message });
+  }
+};
+
