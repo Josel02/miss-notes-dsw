@@ -18,7 +18,8 @@ exports.createUser = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    // Excluye al usuario que realiza la petición utilizando su userId
+    const users = await User.find({ _id: { $ne: req.user.userId } }).select('-passwordHash');
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error getting the users: ' + error.message });
@@ -37,6 +38,44 @@ exports.getUserById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+exports.deleteUserByAdmin = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedUser = await User.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting the user: ' + error.message });
+  }
+};
+
+exports.updateUserByAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { name, email, role } = req.body;
+
+    try {
+        // Buscar el usuario por ID y asegurarse de que existe
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+
+        // Actualizar los campos permitidos
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (role) user.role = role;
+
+        await user.save();
+
+        res.status(200).json({ message: 'Usuario actualizado con éxito.', user });
+    } catch (error) {
+        console.error('Error al actualizar el usuario:', error);
+        res.status(500).json({ message: 'Error al actualizar el usuario.' });
+    }
 };
 
 exports.updateUser = async (req, res) => {
@@ -58,6 +97,15 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: 'Error deleting the user: ' + error.message });
   }
 };
+
+exports.checkUserRole = (req, res) => {
+  if (!req.user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+  }
+  const isAdmin = req.user.role === 'Admin';
+  res.status(200).json({ isAdmin });
+};
+
 
 exports.registerUser = async (req, res) => {
   try {
