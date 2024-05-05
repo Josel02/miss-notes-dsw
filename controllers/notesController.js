@@ -13,9 +13,11 @@ exports.createNote = async (req, res) => {
     res.status(400).json({ message: 'Error creating note: ' + error.message });
   }
 };
+
 exports.getAllNotes = async (req, res) => {
   try {
-    const notes = await Note.find();
+    const userId = req.params.id;
+    const notes = await Note.find({ userId: userId });
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Error getting the notes: ' + error.message });

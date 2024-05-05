@@ -11,9 +11,6 @@ router.put('/:noteId/collections', verifyTokenAndRole(), notesController.updateN
 //Ruta para obtener todas las notas de un usuario
 router.get('/user', verifyTokenAndRole(), notesController.getNotesByUser);
 
-// Obtener una nota por su ID
-router.get('/:id', notesController.getNoteById);
-
 // Crear una nueva nota para el usuario autenticado
 router.post('/', verifyTokenAndRole(), notesController.createNote);
 
@@ -23,7 +20,7 @@ router.put('/:id', verifyTokenAndRole(), notesController.updateNote);
 // Eliminar una nota que pertenece al usuario autenticado
 router.delete('/:id', verifyTokenAndRole(), notesController.deleteNote);
 
-// Obtener todas las notas (general)
-router.get('/', notesController.getAllNotes);
+// Obtener todas las notas de un usuario - Solo para Admins
+router.get('/:id', verifyTokenAndRole("Admin"), notesController.getAllNotes);
 
 module.exports = router;
