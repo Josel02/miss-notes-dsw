@@ -21,9 +21,12 @@ router.put('/:id', verifyTokenAndRole(), notesController.updateNote);
 router.delete('/:id', verifyTokenAndRole(), notesController.deleteNote);
 
 // Obtener todas las notas de un usuario - Solo para Admins
-router.get('/:id', verifyTokenAndRole("Admin"), notesController.getAllNotes);
+router.get('/', verifyTokenAndRole("Admin"), notesController.getAllNotes);
 
 // Borrar la nota de un usuario - Solo para Admins
 router.delete('/admin-delete/:id', verifyTokenAndRole("Admin"), notesController.deleteNoteByAdmin);
+
+// Añadir una nota a un usuario - Solo para Admins
+router.post('/admin-add', verifyTokenAndRole("Admin"), notesController.createNoteByAdmin);
 
 module.exports = router;

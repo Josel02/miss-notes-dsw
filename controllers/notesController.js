@@ -17,9 +17,10 @@ exports.createNote = async (req, res) => {
 
 exports.getAllNotes = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.query.userId;
     // Primero verifica si el usuario existe
     const user = await User.findById(userId);
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -49,6 +50,28 @@ exports.deleteNoteByAdmin = async (req, res) => {
     res.status(200).json({ message: 'Note deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting the note: ' + error.message });
+  }
+};
+
+exports.createNoteByAdmin = async (req, res) => {
+  try {
+    const { userId, ...noteData } = req.body; // Extraer userId y los datos de la nota del body
+
+    // Primero verifica si el usuario existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const newNote = new Note({
+      ...noteData,
+      userId: userId // Usar el userId proporcionado en el body
+    });
+
+    const savedNote = await newNote.save();
+    res.status(201).json(savedNote);
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating note: ' + error.message });
   }
 };
 
