@@ -181,6 +181,28 @@ exports.deleteCollectionByAdmin = async (req, res) => {
   }
 };
 
+exports.createCollectionByAdmin = async (req, res) => {
+  try {
+    const { name, userId } = req.body; // Asume que 'userId' es proporcionado en el cuerpo
+
+    // Verificar que el usuario exista
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Crear una nueva colección para el usuario especificado
+    const newCollection = new Collection({
+      name,
+      userId
+    });
+    const savedCollection = await newCollection.save();
+    res.status(201).json(savedCollection);
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating collection: ' + error.message });
+  }
+};
+
 exports.updateCollectionByAdmin = async (req, res) => {
   const { id } = req.params; // ID de la colección a actualizar
   const { userId, ...updateData } = req.body; // Extrae userId y los datos de actualización del body
