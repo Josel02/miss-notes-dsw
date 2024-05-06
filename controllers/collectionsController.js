@@ -156,6 +156,31 @@ exports.addNotesToCollectionByAdmin = async (req, res) => {
   }
 };
 
+exports.updateCollectionByAdmin = async (req, res) => {
+  const { id } = req.params; // ID de la colección a actualizar
+  const { userId, ...updateData } = req.body; // Extrae userId y los datos de actualización del body
+
+  try {
+    // Verificar que el usuario existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Buscar la colección por ID y verificar que pertenezca al usuario
+    const collection = await Collection.findOne({ _id: id, userId });
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found or does not belong to the specified user' });
+    }
+
+    // Actualizar la colección
+    const updatedCollection = await Collection.findByIdAndUpdate(id, updateData, { new: true });
+    res.status(200).json(updatedCollection);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating the collection: ' + error.message });
+  }
+};
+
 // Función para ajustar la lista de notas de una colección
 exports.addNotesToCollection = async (req, res) => {
   const { collectionId } = req.params;

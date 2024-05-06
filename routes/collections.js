@@ -6,6 +6,9 @@ const verifyTokenAndRole = require('../middleware/authMiddleware');
 // Obtener todas las colecciones de un usuario - Solo para Admins
 router.get('/admin-get', verifyTokenAndRole("Admin"), collectionsController.getCollectionsByAdmin);
 
+// Editar la colección de un usuario - Solo para Admins
+router.put('/admin-update/:id', verifyTokenAndRole("Admin"), collectionsController.updateCollectionByAdmin);
+
 // Ruta para añadir múltiples notas a una colección - Solo para Admins
 router.put('/:collectionId/notes/admin-add', verifyTokenAndRole("Admin"), collectionsController.addNotesToCollectionByAdmin);
 
