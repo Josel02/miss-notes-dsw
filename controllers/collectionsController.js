@@ -1,5 +1,6 @@
 const Collection = require('../models/collection');
 const Note = require('../models/note');
+const User = require('../models/user');
 
 // Crear una nueva colección
 exports.createCollection = async (req, res) => {
@@ -113,6 +114,120 @@ exports.getCollectionsContainingNote = async (req, res) => {
   }
 };
 
+exports.addNotesToCollectionByAdmin = async (req, res) => {
+  const { collectionId } = req.params;
+  const { noteIds, userId } = req.body; // ID del usuario se pasa en el cuerpo
+
+  try {
+    // Verificar que la colección exista y pertenezca al usuario correcto
+    const collection = await Collection.findOne({ _id: collectionId, userId });
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found or does not belong to the specified user' });
+    }
+
+    // Verificar que las notas existan
+    const notes = await Note.find({ _id: { $in: noteIds } });
+    if (notes.length !== noteIds.length) {
+      return res.status(404).json({ message: 'One or more notes not found' });
+    }
+
+    // Preparar conjuntos de IDs para comparación
+    const currentNoteIdsSet = new Set(collection.notes.map(note => note.toString()));
+    const newNoteIdsSet = new Set(noteIds);
+
+    // Filtrar para encontrar notas que no estén en la nueva lista y deben ser eliminadas
+    const notesToRemove = Array.from(currentNoteIdsSet).filter(id => !newNoteIdsSet.has(id));
+
+    // Filtrar para encontrar nuevas notas que no estén en la colección actual
+    const notesToAdd = Array.from(newNoteIdsSet).filter(id => !currentNoteIdsSet.has(id));
+
+    // Actualizar la colección de notas
+    if (notesToRemove.length > 0) {
+      collection.notes = collection.notes.filter(note => !notesToRemove.includes(note.toString()));
+    }
+    if (notesToAdd.length > 0) {
+      collection.notes.push(...notesToAdd);
+    }
+
+    const updatedCollection = await collection.save();
+    res.status(200).json(updatedCollection);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating the collection with new notes: ' + error.message });
+  }
+};
+
+exports.deleteCollectionByAdmin = async (req, res) => {
+  const { id } = req.params; // ID de la colección a eliminar
+  const userId = req.body.userId; // Este ID debe ser enviado desde el frontend
+
+  try {
+    // Verificar que el usuario existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Buscar y verificar que la colección pertenece al usuario antes de eliminarla
+    const collection = await Collection.findOne({ _id: id, userId });
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found or does not belong to the specified user' });
+    }
+
+    // Eliminar la colección
+    await Collection.findByIdAndDelete(id);
+    res.status(204).send(); // Envía una respuesta vacía para indicar el éxito
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting the collection: ' + error.message });
+  }
+};
+
+exports.createCollectionByAdmin = async (req, res) => {
+  try {
+    const { name, userId } = req.body; // Asume que 'userId' es proporcionado en el cuerpo
+
+    // Verificar que el usuario exista
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Crear una nueva colección para el usuario especificado
+    const newCollection = new Collection({
+      name,
+      userId
+    });
+    const savedCollection = await newCollection.save();
+    res.status(201).json(savedCollection);
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating collection: ' + error.message });
+  }
+};
+
+exports.updateCollectionByAdmin = async (req, res) => {
+  const { id } = req.params; // ID de la colección a actualizar
+  const { userId, ...updateData } = req.body; // Extrae userId y los datos de actualización del body
+
+  try {
+    // Verificar que el usuario existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Buscar la colección por ID y verificar que pertenezca al usuario
+    const collection = await Collection.findOne({ _id: id, userId });
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found or does not belong to the specified user' });
+    }
+
+    // Actualizar la colección
+    const updatedCollection = await Collection.findByIdAndUpdate(id, updateData, { new: true });
+    res.status(200).json(updatedCollection);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating the collection: ' + error.message });
+  }
+};
+
 // Función para ajustar la lista de notas de una colección
 exports.addNotesToCollection = async (req, res) => {
   const { collectionId } = req.params;
@@ -152,3 +267,21 @@ exports.addNotesToCollection = async (req, res) => {
   }
 };
 
+exports.getCollectionsByAdmin = async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    // Verificar si el usuario existe antes de intentar obtener sus colecciones
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const collections = await Collection.find({ userId }).populate({
+      path: 'notes',
+      select: 'title content userId' // Ajustar para incluir campos específicos
+    });
+    res.status(200).json(collections);
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting collections: ' + error.message });
+  }
+};
