@@ -9,6 +9,9 @@ router.get('/admin-get', verifyTokenAndRole("Admin"), collectionsController.getC
 // Editar la colección de un usuario - Solo para Admins
 router.put('/admin-update/:id', verifyTokenAndRole("Admin"), collectionsController.updateCollectionByAdmin);
 
+// Borrar la colección de un usuario - Solo para Admins
+router.delete('/admin-delete/:id', verifyTokenAndRole("Admin"), collectionsController.deleteCollectionByAdmin);
+
 // Ruta para añadir múltiples notas a una colección - Solo para Admins
 router.put('/:collectionId/notes/admin-add', verifyTokenAndRole("Admin"), collectionsController.addNotesToCollectionByAdmin);
 

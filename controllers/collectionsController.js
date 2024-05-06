@@ -156,6 +156,31 @@ exports.addNotesToCollectionByAdmin = async (req, res) => {
   }
 };
 
+exports.deleteCollectionByAdmin = async (req, res) => {
+  const { id } = req.params; // ID de la colección a eliminar
+  const userId = req.body.userId; // Este ID debe ser enviado desde el frontend
+
+  try {
+    // Verificar que el usuario existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Buscar y verificar que la colección pertenece al usuario antes de eliminarla
+    const collection = await Collection.findOne({ _id: id, userId });
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found or does not belong to the specified user' });
+    }
+
+    // Eliminar la colección
+    await Collection.findByIdAndDelete(id);
+    res.status(204).send(); // Envía una respuesta vacía para indicar el éxito
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting the collection: ' + error.message });
+  }
+};
+
 exports.updateCollectionByAdmin = async (req, res) => {
   const { id } = req.params; // ID de la colección a actualizar
   const { userId, ...updateData } = req.body; // Extrae userId y los datos de actualización del body
