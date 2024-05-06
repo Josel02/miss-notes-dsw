@@ -47,6 +47,12 @@ describe('Notes API', () => {
     expect(response.data).toEqual(expect.arrayContaining([expect.objectContaining({ _id: noteId })]));
   });
 
+  it('should get a note by ID', async () => {
+    const response = await axios.get(`${notesBaseURL}/${noteId}`);
+    expect(response.status).toBe(200);
+    expect(response.data).toHaveProperty('_id', noteId);
+  });
+
   it('should update a note', async () => {
     const updatedTitle = 'Updated Test Note';
     const response = await axios.put(`${notesBaseURL}/${noteId}`, {

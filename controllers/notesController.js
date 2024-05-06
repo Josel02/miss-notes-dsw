@@ -108,7 +108,6 @@ exports.updateNote = async (req, res) => {
   }
 };
 
-
 exports.getNoteById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -122,7 +121,6 @@ exports.getNoteById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 exports.deleteNote = async (req, res) => {
   try {
