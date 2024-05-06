@@ -3,6 +3,9 @@ const router = express.Router();
 const collectionsController = require('../controllers/collectionsController'); // Ajusta la ruta según donde tengas tu controlador
 const verifyTokenAndRole = require('../middleware/authMiddleware');
 
+// Obtener todas las colecciones de un usuario - Solo para Admins
+router.get('/admin-get', verifyTokenAndRole("Admin"), collectionsController.getCollectionsByAdmin);
+
 // Ruta para añadir múltiples notas a una colección
 router.put('/:collectionId/notes/add', verifyTokenAndRole(), collectionsController.addNotesToCollection);
 

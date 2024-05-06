@@ -1,5 +1,6 @@
 const Collection = require('../models/collection');
 const Note = require('../models/note');
+const User = require('../models/user');
 
 // Crear una nueva colección
 exports.createCollection = async (req, res) => {
@@ -152,3 +153,23 @@ exports.addNotesToCollection = async (req, res) => {
   }
 };
 
+exports.getCollectionsByAdmin = async (req, res) => {
+  try {
+    console.log("Holaaaaaaaaaaaaaaaaaa")
+    console.log("query", req.query)
+    const userId = req.query.userId;
+    // Verificar si el usuario existe antes de intentar obtener sus colecciones
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const collections = await Collection.find({ userId }).populate({
+      path: 'notes',
+      select: 'title content userId' // Ajustar para incluir campos específicos
+    });
+    res.status(200).json(collections);
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting collections: ' + error.message });
+  }
+};
