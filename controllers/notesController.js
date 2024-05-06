@@ -75,6 +75,25 @@ exports.createNoteByAdmin = async (req, res) => {
   }
 };
 
+exports.updateNoteByAdmin = async (req, res) => {
+  try {
+    const noteId = req.params.id;
+    const userId = req.body.userId; // Este es el ID del usuario proporcionado en el body
+
+    // Verificar primero que la nota existe y pertenece al usuario especificado
+    const note = await Note.findOne({ _id: noteId, userId: userId });
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found or user does not own this note' });
+    }
+
+    // Si la nota existe y pertenece al usuario, actualiza la nota
+    const updatedNote = await Note.findByIdAndUpdate(noteId, req.body, { new: true });
+    res.status(200).json(updatedNote);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating the note: ' + error.message });
+  }
+};
+
 exports.updateNote = async (req, res) => {
   try {
     // Verificar primero que la nota pertenece al usuario antes de actualizarla

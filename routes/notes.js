@@ -29,4 +29,7 @@ router.delete('/admin-delete/:id', verifyTokenAndRole("Admin"), notesController.
 // Añadir una nota a un usuario - Solo para Admins
 router.post('/admin-add', verifyTokenAndRole("Admin"), notesController.createNoteByAdmin);
 
+// Editar una nota a un usuario - Solo para Admins
+router.put('/admin-update/:id', verifyTokenAndRole("Admin"), notesController.updateNoteByAdmin);
+
 module.exports = router;
