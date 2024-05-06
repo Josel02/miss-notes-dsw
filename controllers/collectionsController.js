@@ -114,6 +114,48 @@ exports.getCollectionsContainingNote = async (req, res) => {
   }
 };
 
+exports.addNotesToCollectionByAdmin = async (req, res) => {
+  const { collectionId } = req.params;
+  const { noteIds, userId } = req.body; // ID del usuario se pasa en el cuerpo
+
+  try {
+    // Verificar que la colección exista y pertenezca al usuario correcto
+    const collection = await Collection.findOne({ _id: collectionId, userId });
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found or does not belong to the specified user' });
+    }
+
+    // Verificar que las notas existan
+    const notes = await Note.find({ _id: { $in: noteIds } });
+    if (notes.length !== noteIds.length) {
+      return res.status(404).json({ message: 'One or more notes not found' });
+    }
+
+    // Preparar conjuntos de IDs para comparación
+    const currentNoteIdsSet = new Set(collection.notes.map(note => note.toString()));
+    const newNoteIdsSet = new Set(noteIds);
+
+    // Filtrar para encontrar notas que no estén en la nueva lista y deben ser eliminadas
+    const notesToRemove = Array.from(currentNoteIdsSet).filter(id => !newNoteIdsSet.has(id));
+
+    // Filtrar para encontrar nuevas notas que no estén en la colección actual
+    const notesToAdd = Array.from(newNoteIdsSet).filter(id => !currentNoteIdsSet.has(id));
+
+    // Actualizar la colección de notas
+    if (notesToRemove.length > 0) {
+      collection.notes = collection.notes.filter(note => !notesToRemove.includes(note.toString()));
+    }
+    if (notesToAdd.length > 0) {
+      collection.notes.push(...notesToAdd);
+    }
+
+    const updatedCollection = await collection.save();
+    res.status(200).json(updatedCollection);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating the collection with new notes: ' + error.message });
+  }
+};
+
 // Función para ajustar la lista de notas de una colección
 exports.addNotesToCollection = async (req, res) => {
   const { collectionId } = req.params;
@@ -155,8 +197,6 @@ exports.addNotesToCollection = async (req, res) => {
 
 exports.getCollectionsByAdmin = async (req, res) => {
   try {
-    console.log("Holaaaaaaaaaaaaaaaaaa")
-    console.log("query", req.query)
     const userId = req.query.userId;
     // Verificar si el usuario existe antes de intentar obtener sus colecciones
     const userExists = await User.findById(userId);
