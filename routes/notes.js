@@ -23,7 +23,16 @@ router.put('/:id', verifyTokenAndRole(), notesController.updateNote);
 // Eliminar una nota que pertenece al usuario autenticado
 router.delete('/:id', verifyTokenAndRole(), notesController.deleteNote);
 
-// Obtener todas las notas (general)
-router.get('/', notesController.getAllNotes);
+// Obtener todas las notas de un usuario - Solo para Admins
+router.get('/', verifyTokenAndRole("Admin"), notesController.getAllNotes);
+
+// Borrar la nota de un usuario - Solo para Admins
+router.delete('/admin-delete/:id', verifyTokenAndRole("Admin"), notesController.deleteNoteByAdmin);
+
+// Añadir una nota a un usuario - Solo para Admins
+router.post('/admin-add', verifyTokenAndRole("Admin"), notesController.createNoteByAdmin);
+
+// Editar una nota a un usuario - Solo para Admins
+router.put('/admin-update/:id', verifyTokenAndRole("Admin"), notesController.updateNoteByAdmin);
 
 module.exports = router;
