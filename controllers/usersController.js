@@ -176,3 +176,17 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+// Conseguir usuario por su correo
+exports.getUserByEmail = async (req, res) => {
+  try {
+    const email = req.query.email; // Accede al email proporcionado como parámetro de consulta
+    const user = await User.findOne({ email: email }).select('_id name email');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

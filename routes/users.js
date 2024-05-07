@@ -9,12 +9,6 @@ router.post('/', userController.createUser);
 // Eliminar un usuario - Eliminar al usuario autenticado
 router.delete('/me', verifyTokenAndRole(), userController.deleteUser);
 
-// Actualizar un usuario por ID - Solo para Admins
-router.put('/:id', verifyTokenAndRole("Admin"), userController.updateUserByAdmin);
-
-// Eliminar un usuario por ID - Solo para Admins
-router.delete('/:id', verifyTokenAndRole("Admin"), userController.deleteUserByAdmin);
-
 // Obtener todos los usuarios
 router.get('/', verifyTokenAndRole("Admin"), userController.getAllUsers);
 
@@ -35,6 +29,15 @@ router.post('/login', userController.loginUser);
 
 // Cambiar contraseña del usuario autenticado
 router.post('/me/change-password', verifyTokenAndRole(), userController.changePassword);
+
+// Consultar usuario por email
+router.get('/find-by-email', verifyTokenAndRole(), userController.getUserByEmail);
+
+// Actualizar un usuario por ID - Solo para Admins
+router.put('/:id', verifyTokenAndRole("Admin"), userController.updateUserByAdmin);
+
+// Eliminar un usuario por ID - Solo para Admins
+router.delete('/:id', verifyTokenAndRole("Admin"), userController.deleteUserByAdmin);
 
 
 module.exports = router;
