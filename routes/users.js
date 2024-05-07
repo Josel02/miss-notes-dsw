@@ -36,5 +36,8 @@ router.post('/login', userController.loginUser);
 // Cambiar contraseña del usuario autenticado
 router.post('/me/change-password', verifyTokenAndRole(), userController.changePassword);
 
+// Consultar usuario por email
+router.get('/find-by-email', verifyTokenAndRole(), userController.getUserByEmail);
+
 
 module.exports = router;
