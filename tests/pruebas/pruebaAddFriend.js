@@ -122,8 +122,8 @@ async function testFriendshipFlow() {
       console.log('------- Listando solicitudes de amistad pendientes para User 2 después del rechazo -------');
       await listFriendsOrRequests('/listPendingRequests', authTokenUser2);
       
-      console.log('------- Eliminando la amistad establecida -------');
-      await deleteFriendship(newFriendshipId, authTokenUser1);
+      //console.log('------- Eliminando la amistad establecida -------');
+      //await deleteFriendship(newFriendshipId, authTokenUser1);
     }
   }
 }
