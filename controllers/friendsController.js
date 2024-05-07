@@ -128,22 +128,22 @@ exports.revokeFriendRequest = async (req, res) => {
   }
 };
 
-// Eliminar una amistad
+// Eliminar una amistad existente
 exports.deleteFriendship = async (req, res) => {
   const { friendshipId } = req.params;
   try {
       const friendship = await Friendship.findById(friendshipId);
       if (!friendship) {
-          return res.status(404).json({ message: 'No se encontró la amistad.' });
+          return res.status(404).json({ message: 'Amistad no encontrada.' });
       }
       if (friendship.status !== 'Accepted') {
-          return res.status(403).json({ message: 'La amistad no se puede eliminar porque no está en estado aceptado.' });
+          return res.status(403).json({ message: 'Solo se pueden eliminar amistades que estén en estado aceptado.' });
       }
       if (friendship.requester.toString() !== req.user.userId && friendship.receiver.toString() !== req.user.userId) {
-          return res.status(403).json({ message: 'No tienes permiso para eliminar esta amistad porque no eres parte de ella.' });
+          return res.status(403).json({ message: 'No tienes permiso para eliminar esta amistad.' });
       }
       await Friendship.deleteOne({ _id: friendship._id });
-      res.status(200).json({ message: 'Amistad eliminada con éxito.' });
+      res.status(200).json({ message: 'Amistad eliminada correctamente.' });
   } catch (error) {
       res.status(500).json({ message: 'Error al eliminar la amistad: ' + error.message });
   }

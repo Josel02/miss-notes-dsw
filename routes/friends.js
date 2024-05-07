@@ -12,6 +12,12 @@ router.patch('/acceptFriendRequest/:friendshipId', verifyTokenAndRole(), friends
 // Rechazar una solicitud de amistad
 router.patch('/rejectFriendRequest/:friendshipId', verifyTokenAndRole(), friendsController.rejectFriendRequest);
 
+// Revocar una solicitud de amistad
+router.delete('/revokeFriendRequest/:friendshipId', verifyTokenAndRole(), friendsController.revokeFriendRequest);
+
+// Eliminar una amistad
+router.delete('/deleteFriendship/:friendshipId', verifyTokenAndRole(), friendsController.deleteFriendship);
+
 // Listar todas las amistades del usuario autenticado
 router.get('/listFriends', verifyTokenAndRole(), friendsController.listFriends);
 
