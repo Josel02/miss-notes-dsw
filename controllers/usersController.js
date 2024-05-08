@@ -48,12 +48,16 @@ exports.getNonFriendUsers = async (req, res) => {
       const otherUserId = friendship.requester.toString() === currentUserId
         ? friendship.receiver.toString()
         : friendship.requester.toString();
-
+    
       if (friendship.status === 'Accepted') {
         excludedUserIds.push(otherUserId);
       } else if (friendship.status === 'Requested') {
         const role = friendship.requester.toString() === currentUserId ? 'Requester' : 'Receiver';
-        requestedUserDetails.set(otherUserId, { status: 'Requested', role: role });
+        requestedUserDetails.set(otherUserId, {
+          status: 'Requested',
+          role: role,
+          friendshipId: friendship._id.toString()
+        });
       }
     });
 
@@ -65,11 +69,13 @@ exports.getNonFriendUsers = async (req, res) => {
 
     // Añadir el estado 'Requested' y el rol si corresponde
     const usersWithStatus = users.map(user => {
-      const details = requestedUserDetails.get(user._id.toString());
+      const userIdStr = user._id.toString();
+      const details = requestedUserDetails.get(userIdStr);
       return {
         ...user._doc,
         friendshipStatus: details ? details.status : 'None',
-        friendshipRole: details ? details.role : 'None'
+        friendshipRole: details ? details.role : 'None',
+        friendshipId: details ? details.friendshipId : 'None'
       };
     });
 
