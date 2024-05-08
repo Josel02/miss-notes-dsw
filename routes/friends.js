@@ -21,7 +21,10 @@ router.delete('/deleteFriendship/:friendshipId', verifyTokenAndRole(), friendsCo
 // Listar todas las amistades del usuario autenticado
 router.get('/listFriends', verifyTokenAndRole(), friendsController.listFriends);
 
-// Listar solicitudes de amistad pendientes del usuario autenticado
+// Listar solicitudes de amistad pendientes recibidas por el usuario autenticado
 router.get('/listPendingRequests', verifyTokenAndRole(), friendsController.listPendingRequests);
+
+// Listar solicitudes de amistad pendientes enviadas por el usuario autenticado
+router.get('/listFriendshipsRequested', verifyTokenAndRole(), friendsController.listFriendshipsRequested);
 
 module.exports = router;
