@@ -13,7 +13,7 @@ async function registerAndLogin() {
   try {
     let response;
     
-    /*
+    
     // Registro
     response = await apiBase.post('/users/register', {
       name: "Test User",
@@ -21,7 +21,7 @@ async function registerAndLogin() {
       password: "password123",
     });
     console.log('Usuario registrado:', response.data);
-    */
+    
 
     // Inicio de sesión
     response = await apiBase.post('/users/login', {

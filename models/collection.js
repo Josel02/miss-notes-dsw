@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
-const collectionSchema = new mongoose.Schema({
+const collectionSchema = new Schema({
   name: { type: String, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  notes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Note' }]
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  notes: [{ type: Schema.Types.ObjectId, ref: 'Note' }],
+  sharedWith: [{ type: Schema.Types.ObjectId, ref: 'User' }] // Lista de IDs de usuarios con acceso a la colección
 });
 
-module.exports = mongoose.model('Collection', collectionSchema);
+module.exports = model('Collection', collectionSchema);
