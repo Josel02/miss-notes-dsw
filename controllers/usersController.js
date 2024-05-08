@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
+const Friendship = require('../models/friendship');
 const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = process.env.SECRET_KEY;
@@ -21,6 +22,64 @@ exports.getAllUsers = async (req, res) => {
     // Excluye al usuario que realiza la petición utilizando su userId
     const users = await User.find({ _id: { $ne: req.user.userId } }).select('-passwordHash');
     res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting the users: ' + error.message });
+  }
+};
+
+exports.getNonFriendUsers = async (req, res) => {
+  try {
+    const currentUserId = req.user.userId;
+
+    // Obtener las relaciones 'Accepted' y 'Requested' del usuario actual
+    const friendships = await Friendship.find({
+      $or: [
+        { requester: currentUserId },
+        { receiver: currentUserId }
+      ],
+      status: { $in: ['Accepted', 'Requested'] }
+    }).lean();
+
+    // Separar los IDs de usuarios según el tipo de relación
+    const excludedUserIds = [];
+    const requestedUserDetails = new Map();
+
+    friendships.forEach(friendship => {
+      const otherUserId = friendship.requester.toString() === currentUserId
+        ? friendship.receiver.toString()
+        : friendship.requester.toString();
+    
+      if (friendship.status === 'Accepted') {
+        excludedUserIds.push(otherUserId);
+      } else if (friendship.status === 'Requested') {
+        const role = friendship.requester.toString() === currentUserId ? 'Requester' : 'Receiver';
+        requestedUserDetails.set(otherUserId, {
+          status: 'Requested',
+          role: role,
+          friendshipId: friendship._id.toString()
+        });
+      }
+    });
+
+    // Añadir también el propio ID del usuario para no listar al usuario actual
+    excludedUserIds.push(currentUserId);
+
+    // Consultar a todos los usuarios excepto el actual y los que tienen amistad aceptada
+    const users = await User.find({ _id: { $nin: excludedUserIds } }).select('-passwordHash');
+
+    // Añadir el estado 'Requested' y el rol si corresponde
+    const usersWithStatus = users.map(user => {
+      const userIdStr = user._id.toString();
+      const details = requestedUserDetails.get(userIdStr);
+      return {
+        ...user._doc,
+        friendshipStatus: details ? details.status : 'None',
+        friendshipRole: details ? details.role : 'None',
+        friendshipId: details ? details.friendshipId : 'None'
+      };
+    });
+
+    res.status(200).json(usersWithStatus);
   } catch (error) {
     res.status(500).json({ message: 'Error getting the users: ' + error.message });
   }
