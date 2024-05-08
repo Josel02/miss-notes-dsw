@@ -97,9 +97,18 @@ exports.listFriends = async (req, res) => {
           .populate('receiver', 'name email');
 
         const friends = friendships.map(friendship => {
-            return friendship.requester._id.toString() === userId ?
-                { _id: friendship.receiver._id, name: friendship.receiver.name, email: friendship.receiver.email } :
-                { _id: friendship.requester._id, name: friendship.requester.name, email: friendship.requester.email };
+            return {
+                _id: friendship._id ,
+                userId: friendship.requester._id.toString() === userId ? 
+                        friendship.receiver._id.toString() : 
+                        friendship.requester._id.toString(),
+                name: friendship.requester._id.toString() === userId ?
+                      friendship.receiver.name :
+                      friendship.requester.name,
+                email: friendship.requester._id.toString() === userId ?
+                       friendship.receiver.email :
+                       friendship.requester.email,
+            };
         });
 
         res.status(200).json(friends);
@@ -119,7 +128,7 @@ exports.revokeFriendRequest = async (req, res) => {
       // Verifica que el usuario que intenta revocar la solicitud es el solicitante
       // y que la solicitud está en estado "Requested"
       if (friendship.requester.toString() !== req.user.userId || friendship.status !== 'Requested') {
-          return res.status(403).json({ message: 'Friend request cannot be revoked. It may have already been processed or you are not the requester.' });
+          return res.status(404).json({ message: 'Friend request cannot be revoked. It may have already been processed or you are not the requester.' });
       }
       await Friendship.deleteOne({ _id: friendship._id });
       res.status(200).json({ message: 'Friend request successfully revoked.' });
