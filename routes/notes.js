@@ -8,8 +8,9 @@ const verifyTokenAndRole = require('../middleware/authMiddleware');
 //Ruta para actualizar las colecciones de una nota
 router.put('/:noteId/collections', verifyTokenAndRole(), notesController.updateNoteCollections);
 
-//Ruta para obtener todas las notas de un usuario
-router.get('/user', verifyTokenAndRole(), notesController.getNotesByUser);
+//Ruta para obtener todas las notas de un usuario donde es el propietario
+//router.get('/user', verifyTokenAndRole(), notesController.getNotesByUser);
+router.get('/user', verifyTokenAndRole(), notesController.getMyNotes);
 
 // Obtener una nota por su ID
 router.get('/:id', notesController.getNoteById);
@@ -36,7 +37,7 @@ router.post('/admin-add', verifyTokenAndRole("Admin"), notesController.createNot
 router.put('/admin-update/:id', verifyTokenAndRole("Admin"), notesController.updateNoteByAdmin);
 
 // Obtener notas donde yo soy el propietario
-router.get('/my-notes', verifyTokenAndRole(), notesController.getMyNotes);
+//router.get('/my-notes', verifyTokenAndRole(), notesController.getMyNotes);
 
 // Obtener notas compartidas conmigo
 router.get('/shared-with-me', verifyTokenAndRole(), notesController.getSharedWithMeNotes);
@@ -49,7 +50,6 @@ router.post('/unshare-note', verifyTokenAndRole(), notesController.unshareNote);
 
 // Actualiza la lista de usuarios con los que se comparte una nota propietaria
 router.put('/update-shared-users', verifyTokenAndRole(), notesController.updateSharedUsers);
-
 
 
 module.exports = router;
