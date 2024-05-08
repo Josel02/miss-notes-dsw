@@ -170,3 +170,143 @@ exports.updateNoteCollections = async (req, res) => {
   }
 };
 
+// Obtener notas donde yo soy el propietario
+exports.getMyNotes = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notes = await Note.find({ userId: userId }).populate({
+      path: 'sharedWith',
+      select: 'name email -_id'
+    });
+    res.status(200).json(notes);
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting notes: ' + error.message });
+  }
+};
+
+// Obtener notas compartidas conmigo
+exports.getSharedWithMeNotes = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notes = await Note.find({ sharedWith: { $in: [userId] } })
+      .populate({
+        path: 'userId',
+        select: 'name email -_id'
+      })
+      .populate({
+        path: 'sharedWith',
+        match: { _id: { $ne: userId } },
+        select: 'name email -_id'
+      });
+
+    res.status(200).json(notes.map(note => ({
+      ...note.toJSON(),
+      sharedWith: note.sharedWith.filter(user => user._id.toString() !== userId)
+    })));
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting shared notes: ' + error.message });
+  }
+};
+
+// Compartir notas con amigos
+exports.shareNoteWithFriend = async (req, res) => {
+  const { noteId, friendId } = req.body;  // ID de la nota y del amigo con quien compartir
+  const userId = req.user.userId;  // ID del usuario dueño de la nota
+
+  try {
+    // Verificar que la nota pertenece al usuario que hace la solicitud
+    const note = await Note.findOne({ _id: noteId, userId: userId });
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found or you do not own this note.' });
+    }
+
+    // Verificar que el receptor es un amigo confirmado
+    const isFriend = await Friendship.findOne({
+      $or: [
+        { requester: userId, receiver: friendId },
+        { requester: friendId, receiver: userId }
+      ],
+      status: 'Accepted'
+    });
+
+    if (!isFriend) {
+      return res.status(403).json({ message: 'The user is not your confirmed friend.' });
+    }
+
+    // Agregar al amigo a la lista de compartidos si aún no está incluido
+    if (!note.sharedWith.includes(friendId)) {
+      note.sharedWith.push(friendId);
+      await note.save();
+    }
+
+    res.status(200).json({ message: 'Note shared successfully.', note });
+  } catch (error) {
+    res.status(500).json({ message: 'Error sharing note: ' + error.message });
+  }
+};
+
+// Método para quitarme de la lista de compartidos de una nota
+exports.unshareNote = async (req, res) => {
+  const { noteId } = req.body;  // ID de la nota
+  const userId = req.user.userId;  // ID del usuario que desea dejar de compartir la nota
+
+  try {
+    // Verificar que la nota existe y que está compartida con el usuario
+    const note = await Note.findById(noteId);
+    if (!note || !note.sharedWith.includes(userId)) {
+      return res.status(404).json({ message: 'Note not found or not shared with you.' });
+    }
+
+    // Eliminar al usuario de la lista de compartidos
+    note.sharedWith = note.sharedWith.filter(id => id.toString() !== userId);
+    await note.save();
+
+    res.status(200).json({ message: 'Note unshared successfully.', note });
+  } catch (error) {
+    res.status(500).json({ message: 'Error unsharing note: ' + error.message });
+  }
+};
+
+// Método para actualizar la lista de usuarios con los que he compartido una nota
+exports.updateSharedUsers = async (req, res) => {
+  const { noteId, userIds } = req.body;  // ID de la nota y lista de IDs de usuarios a compartir
+  const ownerId = req.user.userId;  // ID del propietario de la nota
+
+  try {
+    // Verificar que la nota pertenece al usuario que hace la solicitud
+    const note = await Note.findOne({ _id: noteId, userId: ownerId });
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found or you do not own this note.' });
+    }
+
+    // Verificar que todos los usuarios en la lista son amigos confirmados
+    const friendships = await Friendship.find({
+      $or: [
+        { requester: ownerId, receiver: { $in: userIds } },
+        { requester: { $in: userIds }, receiver: ownerId }
+      ],
+      status: 'Accepted'
+    });
+
+    // Crear un conjunto de IDs de amigos confirmados
+    const confirmedFriendIds = new Set(friendships.map(f => f.requester.toString() === ownerId ? f.receiver.toString() : f.requester.toString()));
+
+    // Verificar que todos los IDs proporcionados están en el conjunto de amigos confirmados
+    const allFriends = userIds.every(id => confirmedFriendIds.has(id));
+    if (!allFriends) {
+      return res.status(403).json({ message: 'One or more users are not your confirmed friends.' });
+    }
+
+    // Actualizar la lista de compartidos en la nota
+    note.sharedWith = userIds;
+    await note.save();
+
+    res.status(200).json({ message: 'Shared users updated successfully.', note });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating shared users: ' + error.message });
+  }
+};
+
+
+
+

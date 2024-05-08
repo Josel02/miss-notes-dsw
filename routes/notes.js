@@ -35,4 +35,21 @@ router.post('/admin-add', verifyTokenAndRole("Admin"), notesController.createNot
 // Editar una nota a un usuario - Solo para Admins
 router.put('/admin-update/:id', verifyTokenAndRole("Admin"), notesController.updateNoteByAdmin);
 
+// Obtener notas donde yo soy el propietario
+router.get('/my-notes', verifyTokenAndRole(), notesController.getMyNotes);
+
+// Obtener notas compartidas conmigo
+router.get('/shared-with-me', verifyTokenAndRole(), notesController.getSharedWithMeNotes);
+
+// Compartir una nota con un amigo
+router.post('/share-note', verifyTokenAndRole(), notesController.shareNoteWithFriend);
+
+// Quitarme de compartidos en la nota de un amigo
+router.post('/unshare-note', verifyTokenAndRole(), notesController.unshareNote);
+
+// Actualiza la lista de usuarios con los que se comparte una nota propietaria
+router.put('/update-shared-users', verifyTokenAndRole(), notesController.updateSharedUsers);
+
+
+
 module.exports = router;
