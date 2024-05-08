@@ -12,6 +12,9 @@ router.delete('/me', verifyTokenAndRole(), userController.deleteUser);
 // Obtener todos los usuarios
 router.get('/', verifyTokenAndRole("Admin"), userController.getAllUsers);
 
+// Obtener usuarios no amigos - Usuarios que no son amigos del usuario autenticado
+router.get('/nonFriendList', verifyTokenAndRole(), userController.getNonFriendUsers);
+
 // Obtener un usuario por ID - Este ID es el del usuario autenticado
 router.get('/me', verifyTokenAndRole(), userController.getUserById);
 
