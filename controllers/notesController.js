@@ -1,6 +1,7 @@
 const Note = require('../models/note');
 const Collection = require('../models/collection');
 const User = require('../models/user');
+const Friendship = require('../models/friendship');
 
 exports.createNote = async (req, res) => {
   try {
@@ -231,26 +232,46 @@ exports.getMyNotes = async (req, res) => {
 // Obtener notas compartidas conmigo
 exports.getSharedWithMeNotes = async (req, res) => {
   try {
+    // Obtener el ID del usuario que hace la petición
     const userId = req.user.userId;
-    const notes = await Note.find({ sharedWith: { $in: [userId] } })
-      .populate({
-        path: 'userId',
-        select: 'name email -_id'
-      })
-      .populate({
-        path: 'sharedWith',
-        match: { _id: { $ne: userId } },
-        select: 'name email -_id'
-      });
 
-    res.status(200).json(notes.map(note => ({
-      ...note.toJSON(),
-      sharedWith: note.sharedWith.filter(user => user._id.toString() !== userId)
-    })));
+    // Buscar las notas donde el usuario está en 'sharedWith' pero no es el propietario
+    const notes = await Note.find({
+      sharedWith: { $in: [userId] },
+      userId: { $ne: userId }
+    }).populate('userId', 'name email') // Popula el campo userId para obtener nombre y email del propietario
+      .populate('sharedWith', 'name email'); // Popula el campo sharedWith para obtener nombre y email de los usuarios compartidos
+
+    // Filtrar el array de sharedWith para excluir al usuario que hace la petición
+    const modifiedNotes = notes.map(note => {
+      const sharedWithFiltered = note.sharedWith.filter(user => user._id.toString() !== userId);
+      return {
+        _id: note._id,
+        title: note.title,
+        content: note.content,
+        owner: {
+          _id: note.userId._id,
+          name: note.userId.name,
+          email: note.userId.email
+        },
+        sharedWith: sharedWithFiltered.map(user => ({
+          _id: user._id,
+          name: user.name,
+          email: user.email
+        }))
+      };
+    });
+
+    // Devolver las notas modificadas
+    res.json(modifiedNotes);
   } catch (error) {
-    res.status(500).json({ message: 'Error getting shared notes: ' + error.message });
+    console.error('Error getting shared notes:', error);
+    res.status(500).send('Error al obtener las notas compartidas');
   }
-};
+}
+    
+
+
 
 // Compartir notas con amigos
 exports.shareNoteWithFriend = async (req, res) => {

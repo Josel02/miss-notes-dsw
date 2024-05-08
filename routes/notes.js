@@ -13,7 +13,7 @@ router.put('/:noteId/collections', verifyTokenAndRole(), notesController.updateN
 router.get('/user', verifyTokenAndRole(), notesController.getMyNotes);
 
 // Obtener una nota por su ID
-router.get('/:id', notesController.getNoteById);
+//router.get('/:id', notesController.getNoteById);
 
 // Crear una nueva nota para el usuario autenticado
 router.post('/', verifyTokenAndRole(), notesController.createNote);
