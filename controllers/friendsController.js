@@ -1,4 +1,5 @@
 const Friendship = require('../models/friendship');
+const User = require('../models/user');
 
 // Enviar una solicitud de amistad
 exports.sendFriendRequest = async (req, res) => {
@@ -90,6 +91,40 @@ exports.rejectFriendRequest = async (req, res) => {
 exports.listFriends = async (req, res) => {
     const userId = req.user.userId; // Usuario extraído del token
     try {
+        const friendships = await Friendship.find({
+            $or: [{ requester: userId }, { receiver: userId }],
+            status: 'Accepted'
+        }).populate('requester', 'name email')
+          .populate('receiver', 'name email');
+
+        const friends = friendships.map(friendship => {
+            return {
+                _id: friendship._id ,
+                userId: friendship.requester._id.toString() === userId ? 
+                        friendship.receiver._id.toString() : 
+                        friendship.requester._id.toString(),
+                name: friendship.requester._id.toString() === userId ?
+                      friendship.receiver.name :
+                      friendship.requester.name,
+                email: friendship.requester._id.toString() === userId ?
+                       friendship.receiver.email :
+                       friendship.requester.email,
+            };
+        });
+
+        res.status(200).json(friends);
+    } catch (error) {
+        res.status(500).json({ message: 'Error listing friends: ' + error.message });
+    }
+};
+
+exports.listFriendsByUserId = async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const userExists = await User.findById(userId);
+        if (!userExists) {
+          return res.status(404).json({ message: 'User not found' });
+        }
         const friendships = await Friendship.find({
             $or: [{ requester: userId }, { receiver: userId }],
             status: 'Accepted'

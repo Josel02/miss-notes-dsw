@@ -27,4 +27,7 @@ router.get('/listPendingRequests', verifyTokenAndRole(), friendsController.listP
 // Listar solicitudes de amistad pendientes enviadas por el usuario autenticado
 router.get('/listFriendshipsRequested', verifyTokenAndRole(), friendsController.listFriendshipsRequested);
 
+// Listar todas las amistades de un usario por ID - Solo para Admins
+router.get('/listFriends/:userId', verifyTokenAndRole("Admin"), friendsController.listFriendsByUserId);
+
 module.exports = router;
