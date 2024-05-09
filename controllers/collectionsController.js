@@ -73,6 +73,10 @@ exports.getSharedCollectionsWithMe = async (req, res) => {
           select: 'name email' // Selecciona los datos del propietario y los compartidos
         },
         select: 'title content userId sharedWith'
+      })
+      .populate({
+        path: 'sharedWith',
+        select: 'name email'
       });
 
     const modifiedCollections = collections.map(collection => ({
@@ -90,7 +94,6 @@ exports.getSharedCollectionsWithMe = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving shared collections: ' + error.message });
   }
 };
-
 
 // Actualizar el nombre de una colección, permitiendo al propietario y a usuarios específicamente compartidos modificar el nombre
 exports.updateNameCollection = async (req, res) => {
