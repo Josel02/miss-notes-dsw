@@ -224,6 +224,24 @@ exports.listPendingRequests = async (req, res) => {
     }
 };
 
+// Listar solicitudes de amistad pendientes (que ha recibido y no ha respondido)
+exports.listPendingRequestsByUserId = async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const userExists = await User.findById(userId);
+        if (!userExists) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        const pendingRequests = await Friendship.find({
+            receiver: userId,
+            status: 'Requested'
+        }).populate('requester', 'name email');
+        res.status(200).json(pendingRequests);
+    } catch (error) {
+        res.status(500).json({ message: 'Error listing pending friend requests: ' + error.message });
+    }
+};
+
 // Listar solicitudes de amistad pendientes (que ha enviado y no tienen respuesta)
 exports.listFriendshipsRequested = async (req, res) => {
     const userId = req.user.userId; // Usuario extraído del token

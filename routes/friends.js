@@ -30,6 +30,9 @@ router.get('/listFriendshipsRequested', verifyTokenAndRole(), friendsController.
 // Listar todas las amistades de un usario por ID - Solo para Admins
 router.get('/listFriends/:userId', verifyTokenAndRole("Admin"), friendsController.listFriendsByUserId);
 
+// Listar solicitudes de amistad pendientes recibidas por un usuario por ID - Solo para Admins
+router.get('/listPendingRequests/:userId', verifyTokenAndRole("Admin"), friendsController.listPendingRequestsByUserId);
+
 // Listar solicitudes de amistad pendientes enviadas por un usuario por ID - Solo para Admins
 router.get('/listFriendshipsRequested/:userId', verifyTokenAndRole("Admin"), friendsController.listFriendshipsRequestedByUserId);
 
