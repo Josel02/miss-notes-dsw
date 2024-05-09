@@ -168,6 +168,33 @@ exports.listFriendsByUserId = async (req, res) => {
     }
 };
 
+exports.adminRejectFriendRequest = async (req, res) => {
+    const { friendshipId } = req.params;
+    const { userId } = req.body;  // Recibe el userId del cuerpo de la petición
+  
+    try {
+        const userExists = await User.findById(userId);
+        if (!userExists) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        const friendship = await Friendship.findById(friendshipId);
+        if (!friendship || friendship.receiver.toString() !== userId) {
+            return res.status(404).json({ message: 'Friend request not found or access denied.' });
+        }
+        // Nos aseguramos de que la solicitud de amistad sólo se pueda rechazar si su estado actual es "Requested".
+        if (friendship.status !== 'Requested') {
+            return res.status(400).json({ message: 'Friend request cannot be rejected as it is not in Requested status.' });
+        }
+        friendship.status = 'Denied';
+        friendship.responseDate = new Date();
+        friendship.actionUser = 'Receiver';
+        await friendship.save();
+        res.status(200).json({ message: 'Friend request rejected.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error rejecting friend request: ' + error.message });
+    }
+};
+
 exports.adminRevokeFriendRequest = async (req, res) => {
     const { friendshipId } = req.params;
     const { userId } = req.body;  // Recibe el userId del cuerpo de la petición

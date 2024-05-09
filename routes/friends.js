@@ -21,6 +21,9 @@ router.delete('/deleteFriendship/:friendshipId', verifyTokenAndRole(), friendsCo
 // Aceptar una solicitud de amistad - Solo para Admins
 router.patch('/adminAcceptFriendRequest/:friendshipId', verifyTokenAndRole("Admin"), friendsController.adminAcceptFriendRequest);
 
+// Rechazar una solicitud de amistad - Solo para Admins
+router.patch('/adminRejectFriendRequest/:friendshipId', verifyTokenAndRole("Admin"), friendsController.adminRejectFriendRequest);
+
 // Eliminar una amistad - Solo para Admins
 router.delete('/adminDeleteFriendship/:friendshipId', verifyTokenAndRole("Admin"), friendsController.adminDeleteFriendship);
 
