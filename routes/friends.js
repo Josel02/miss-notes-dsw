@@ -18,6 +18,9 @@ router.delete('/revokeFriendRequest/:friendshipId', verifyTokenAndRole(), friend
 // Eliminar una amistad
 router.delete('/deleteFriendship/:friendshipId', verifyTokenAndRole(), friendsController.deleteFriendship);
 
+// Eliminar una amistad - Solo para Admins
+router.delete('/adminDeleteFriendship/:friendshipId', verifyTokenAndRole("Admin"), friendsController.adminDeleteFriendship);
+
 // Revocar una solicitud de amistad - Solo para Admins
 router.delete('/adminRevokeFriendRequest/:friendshipId', verifyTokenAndRole("Admin"), friendsController.adminRevokeFriendRequest);
 

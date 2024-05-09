@@ -191,8 +191,34 @@ exports.adminRevokeFriendRequest = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Error revoking friend request: ' + error.message });
     }
-  };
-  
+};
+
+// Eliminar una amistad existente
+exports.adminDeleteFriendship = async (req, res) => {
+    const { friendshipId } = req.params;
+    const { userId } = req.body;
+
+    try {
+        const friendship = await Friendship.findById(friendshipId);
+        const userExists = await User.findById(userId);
+        if (!userExists) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        if (!friendship) {
+            return res.status(404).json({ message: 'Amistad no encontrada.' });
+        }
+        if (friendship.status !== 'Accepted') {
+            return res.status(403).json({ message: 'Solo se pueden eliminar amistades que estén en estado aceptado.' });
+        }
+        if (friendship.requester.toString() !== userId && friendship.receiver.toString() !== userId) {
+            return res.status(403).json({ message: 'No tienes permiso para eliminar esta amistad.' });
+        }
+        await Friendship.deleteOne({ _id: friendship._id });
+        res.status(200).json({ message: 'Amistad eliminada correctamente.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al eliminar la amistad: ' + error.message });
+    }
+};
 
 // Revocar una solicitud de amistad (por parte de quien la hizo)
 exports.revokeFriendRequest = async (req, res) => {
