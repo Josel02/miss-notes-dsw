@@ -22,7 +22,7 @@ router.put('/update-full/:id', verifyTokenAndRole(), collectionsController.updat
 router.patch('/update-notes/:id', verifyTokenAndRole(), collectionsController.updateNoteListInCollection); // Actualizar la lista de notas de una colección
 
 // Rutas para compartir y descompartir colecciones
-router.post('/share/:id', verifyTokenAndRole(), collectionsController.shareCollectionWithFriends); // Compartir una colección con amigos
+router.post('/share', verifyTokenAndRole(), collectionsController.shareCollectionWithFriends); // Compartir una colección con amigos
 router.patch('/unshare/:id', verifyTokenAndRole(), collectionsController.unshareCollection); // Quitar el propio usuario de los compartidos de una colección
 
 // Rutas de utilidad para trabajar con notas dentro de colecciones
