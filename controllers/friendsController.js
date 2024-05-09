@@ -168,6 +168,32 @@ exports.listFriendsByUserId = async (req, res) => {
     }
 };
 
+exports.adminRevokeFriendRequest = async (req, res) => {
+    const { friendshipId } = req.params;
+    const { userId } = req.body;  // Recibe el userId del cuerpo de la petición
+  
+    try {
+        const userExists = await User.findById(userId);
+        if (!userExists) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        const friendship = await Friendship.findById(friendshipId);
+        if (!friendship) {
+            return res.status(404).json({ message: 'Friend request not found.' });
+        }
+        // Verifica que el usuario que intenta revocar la solicitud es el solicitante
+        // y que la solicitud está en estado "Requested"
+        if (friendship.requester.toString() !== userId || friendship.status !== 'Requested') {
+            return res.status(404).json({ message: 'Friend request cannot be revoked. It may have already been processed or you are not the requester.' });
+        }
+        await Friendship.deleteOne({ _id: friendship._id });
+        res.status(200).json({ message: 'Friend request successfully revoked.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error revoking friend request: ' + error.message });
+    }
+  };
+  
+
 // Revocar una solicitud de amistad (por parte de quien la hizo)
 exports.revokeFriendRequest = async (req, res) => {
   const { friendshipId } = req.params;
