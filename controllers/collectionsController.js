@@ -256,7 +256,9 @@ exports.updateNoteListInCollection = async (req, res) => {
       .concat(notesToAdd.filter(noteId => !existingNoteIds.includes(noteId.toString()))); // Añadir notas nuevas
 
     await collection.save();
-    res.status(200).json({ message: 'Note list updated successfully', collection });
+    //res.status(200).json({ message: 'Note list updated successfully', collection });
+    res.status(200).json({ message: 'Note list updated successfully', noteIds: collection.notes.map(note => note.toString()) });
+
   } catch (error) {
     res.status(500).json({ message: 'Error updating the note list in the collection: ' + error.message });
   }
