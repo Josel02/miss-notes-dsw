@@ -105,6 +105,7 @@ exports.listFriendshipsRequestedByUserId = async (req, res) => {
 
 // Listar todas las amistades de un usuario
 exports.listFriends = async (req, res) => {
+    const userId = req.user.userId; // Usuario extraído del token
     try {
         const friendships = await Friendship.find({
             $or: [{ requester: userId }, { receiver: userId }],
