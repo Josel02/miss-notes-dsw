@@ -139,6 +139,7 @@ exports.getNoteById = async (req, res) => {
 };
 */
 
+// Solo se puede borrar una nota por el propietario
 exports.deleteNote = async (req, res) => {
   try {
     // Verificar primero que la nota pertenece al usuario antes de eliminarla
@@ -277,11 +278,6 @@ exports.getSharedWithMeNotes = async (req, res) => {
 exports.shareNoteWithFriends = async (req, res) => {
   const { noteId, friendIds } = req.body;  // ID de la nota y IDs de los amigos con quienes compartir
   const userId = req.user.userId;  // ID del usuario dueño de la nota
-  console.log("Entrando a shareNoteWithFriends");
-  console.log("noteId: " + noteId);
-  for (let i = 0; i < friendIds.length; i++) {
-    console.log("friendId: " + friendIds[i]);
-  }
   try {
     // Verificar que la nota pertenece al usuario que hace la solicitud
     const note = await Note.findOne({ _id: noteId, userId: userId });
