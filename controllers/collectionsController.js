@@ -482,11 +482,11 @@ exports.unshareCollection = async (req, res) => {
 exports.shareCollectionWithFriends = async (req, res) => {
   const { collectionId, friendIds } = req.body;
   const userId = req.user.userId;
-
+  
   try {
     // Verificar que la colección exista y pertenezca al usuario
     const collection = await Collection.findById(collectionId).populate('userId', 'name email');
-    if (!collection || collection.userId.toString() !== userId) {
+    if (!collection || collection.userId._id.toString() !== userId) {
       return res.status(403).json({ message: 'Unauthorized: Only the collection owner can share the collection.' });
     }
 
