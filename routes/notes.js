@@ -42,8 +42,8 @@ router.put('/admin-update/:id', verifyTokenAndRole("Admin"), notesController.upd
 // Obtener notas compartidas conmigo
 router.get('/shared-with-me', verifyTokenAndRole(), notesController.getSharedWithMeNotes);
 
-// Compartir una nota con un amigo
-router.post('/share-note', verifyTokenAndRole(), notesController.shareNoteWithFriend);
+// Compartir una nota con amigos
+router.post('/share-note', verifyTokenAndRole(), notesController.shareNoteWithFriends);
 
 // Quitarme de compartidos en la nota de un amigo
 router.post('/unshare-note', verifyTokenAndRole(), notesController.unshareNote);
