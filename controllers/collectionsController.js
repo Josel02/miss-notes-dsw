@@ -1,6 +1,8 @@
 const Collection = require('../models/collection');
 const Note = require('../models/note');
 const User = require('../models/user');
+const Friendship = require('../models/friendship');
+const Notification = require('../models/notification');
 
 // Crear una nueva colección
 exports.createCollection = async (req, res) => {
@@ -480,24 +482,46 @@ exports.shareCollectionWithFriends = async (req, res) => {
   const userId = req.user.userId;
 
   try {
-    const collection = await Collection.findById(collectionId);
+    // Verificar que la colección exista y pertenezca al usuario
+    const collection = await Collection.findById(collectionId).populate('userId', 'name email');
     if (!collection || collection.userId.toString() !== userId) {
       return res.status(403).json({ message: 'Unauthorized: Only the collection owner can share the collection.' });
     }
 
-    const friends = await Friendship.find({
+    // Vetificar que todos los receptores son amigos confirmados
+    const friendships = await Friendship.find({
       $or: [
         { requester: userId, receiver: { $in: friendIds }, status: 'Accepted' },
         { requester: { $in: friendIds }, receiver: userId, status: 'Accepted' }
       ]
     });
 
-    if (friends.length !== friendIds.length) {
+    // Filtrar IDs de amigos confirmados
+    const confirmedFriendIds = friendships.map(f => 
+      f.requester.toString() === userId ? f.receiver.toString() : f.requester.toString()
+    );
+
+    if (confirmedFriendIds.length !== friendIds.length) {
       return res.status(404).json({ message: 'One or more users are not friends.' });
     }
 
-    collection.sharedWith = friendIds;
+    // Actualizar la lista de compartidos con la lista de amigos confirmados
+    collection.sharedWith = confirmedFriendIds;
     await collection.save();
+
+    //Enviar notificaciones a cada amigo confirmado
+    confirmedFriendIds.forEach(async friendId => {
+      const notification = new Notification({
+        userId: friendId,
+        text: `${collection.userId.name} has shared the  collection '${collection.name}' with you!`,
+        type: 'collectionShared',
+        data: { collectionId: collection._id, friendId: userId}
+      });
+      await notification.save();
+    });
+
+
+
     res.status(200).json({ message: 'Collection shared successfully.', collection });
   } catch (error) {
     res.status(500).json({ message: 'Error sharing the collection: ' + error.message });

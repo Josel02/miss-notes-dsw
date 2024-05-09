@@ -2,6 +2,7 @@ const Note = require('../models/note');
 const Collection = require('../models/collection');
 const User = require('../models/user');
 const Friendship = require('../models/friendship');
+const Notification = require('../models/notification');
 
 exports.createNote = async (req, res) => {
   try {
@@ -97,12 +98,12 @@ exports.updateNoteByAdmin = async (req, res) => {
   }
 };
 
-// Actualizar una nota epor el propietario o por el compartido
+// Actualizar una nota por el propietario o por el compartido
 exports.updateNote = async (req, res) => {
   try {
     const noteId = req.params.id;
     const userId = req.user.userId;
-    const updateData = req.body;
+    const { title, content } = req.body; // Destructuración para obtener solo el título y contenido de la petición
 
     // Buscar la nota para verificar si el usuario actual es el propietario o está en la lista de compartidos
     const note = await Note.findById(noteId);
@@ -111,17 +112,20 @@ exports.updateNote = async (req, res) => {
     }
 
     // Verificar si el usuario es el propietario o un usuario compartido autorizado
-    if (note.userId.toString() !== userId && !note.sharedWith.includes(userId)) {
+    if (note.userId.toString() !== userId && !note.sharedWith.some(user => user.toString() === userId)) {
       return res.status(403).json({ message: 'You do not have permission to update this note' });
     }
 
-    // Actualizar la nota
-    const updatedNote = await Note.findByIdAndUpdate(noteId, updateData, { new: true }).populate('userId', 'name email').populate('sharedWith', 'name email');
+    // Actualizar solo el título y el contenido de la nota
+    note.title = title;
+    note.content = content;
+    const updatedNote = await note.save();
     res.status(200).json(updatedNote);
   } catch (error) {
     res.status(400).json({ message: 'Error updating the note: ' + error.message });
   }
 };
+
 
 /*
 exports.getNoteById = async (req, res) => {
@@ -279,8 +283,8 @@ exports.shareNoteWithFriends = async (req, res) => {
   const { noteId, friendIds } = req.body;  // ID de la nota y IDs de los amigos con quienes compartir
   const userId = req.user.userId;  // ID del usuario dueño de la nota
   try {
-    // Verificar que la nota pertenece al usuario que hace la solicitud
-    const note = await Note.findOne({ _id: noteId, userId: userId });
+    // Verificar que la nota pertenece al usuario que hace la solicitud y obtener el nombre del usuario
+    const note = await Note.findOne({ _id: noteId, userId: userId }).populate('userId', 'name');
     if (!note) {
       return res.status(404).json({ message: 'Note not found or you do not own this note.' });
     }
@@ -304,11 +308,23 @@ exports.shareNoteWithFriends = async (req, res) => {
 
     await note.save();
 
+    // Enviar notificaciones a cada amigo confirmado
+    confirmedFriendIds.forEach(async friendId => {
+      const notification = new Notification({
+        userId: friendId,
+        text: `${note.userId.name} has shared the note '${note.title}' with you!`,
+        type: 'noteShared',
+        data: { noteId: note._id, friendId: userId }
+      });
+      await notification.save();
+    });
+
     res.status(200).json({ message: 'Note shared successfully with all confirmed friends.', note });
   } catch (error) {
     res.status(500).json({ message: 'Error sharing note: ' + error.message });
   }
 };
+
 
 
 // Método para quitarme de la lista de compartidos de una nota
