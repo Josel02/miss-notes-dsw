@@ -33,6 +33,10 @@ exports.getCollectionsByUser = async (req, res) => {
           select: '_id name email'  // Asegúrate de incluir '_id' aquí para obtener los IDs de los usuarios
         },
         select: 'title content userId sharedWith'
+      })
+      .populate({
+        path: 'sharedWith',
+        select: 'name email'
       });
 
     const modifiedCollections = collections.map(collection => {
