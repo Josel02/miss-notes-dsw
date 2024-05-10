@@ -84,7 +84,7 @@ exports.getSharedCollectionsWithMe = async (req, res) => {
       sharedWith: collection.sharedWith.filter(user => user._id.toString() !== userId), // Quita al usuario actual de la lista de compartidos
       notes: collection.notes.map(note => ({
         ...note.toObject(),
-        isEditable: note.userId.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId), // Determina si el usuario puede editar la nota
+        isEditable: note.userId._id.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId), // Determina si el usuario puede editar la nota
         sharedWith: note.sharedWith.filter(user => user._id.toString() !== userId) // Quita al usuario actual de la lista de compartidos en cada nota
       }))
     }));
@@ -240,38 +240,16 @@ exports.updateNoteListInCollection = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to update the note list in this collection. You need to be the owner or a shared user.' });
     }
 
-    // Obtener notas existentes para validar permisos
-    const notes = await Note.find({ _id: { $in: noteIds } });
-
-    // Añadir nuevas notas a la colección
-    const notesToAdd = [];
-    notes.forEach(note => {
-      if (note.userId.toString() === userId || note.sharedWith.some(sharedUser => sharedUser.toString() === userId)) {
-        notesToAdd.push(note._id);
-      } else {
-        return res.status(403).json({ message: `You do not have permission to add note with ID ${note._id} to the collection.` });
-      }
-    });
-
-    // Quitar notas de la colección (sin verificar permisos de propiedad)
-    const existingNoteIds = collection.notes.map(note => note.toString());
-    const notesToRemove = existingNoteIds.filter(noteId => !noteIds.includes(noteId));
-
-    // Actualizar la lista de notas en la colección
-    collection.notes = existingNoteIds
-      .filter(noteId => !notesToRemove.includes(noteId)) // Eliminar notas
-      .concat(notesToAdd.filter(noteId => !existingNoteIds.includes(noteId.toString()))); // Añadir notas nuevas
+    // Actualizar la lista de notas en la colección sin verificar cada nota individual
+    collection.notes = noteIds;
 
     await collection.save();
-    //res.status(200).json({ message: 'Note list updated successfully', collection });
-    res.status(200).json({ message: 'Note list updated successfully', noteIds: collection.notes.map(note => note.toString()) });
+    res.status(200).json({ message: 'Note list updated successfully', noteIds: collection.notes });
 
   } catch (error) {
     res.status(500).json({ message: 'Error updating the note list in the collection: ' + error.message });
   }
 };
-
-
 
 // Función para obtener todas las colecciones que contienen una nota específica, mostrando el contenido completo de las notas
 exports.getCollectionsContainingNote = async (req, res) => {
