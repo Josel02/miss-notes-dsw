@@ -21,6 +21,26 @@ exports.getAllNotifications = async (req, res) => {
     }
 };
 
+// Marcar una notificación como leída
+exports.markAsRead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.userId;
+
+        // Asegurarse que la notificación pertenece al usuario
+        const notification = await Notification.findOne({ _id: id, userId: userId });
+        if (!notification) {
+            return res.status(404).json({ message: 'Notification not found or access denied.' });
+        }
+
+        notification.read = true;
+        await notification.save();
+        res.status(200).json({ message: 'Notification marked as read.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error marking notification as read: ' + error.message });
+    }
+};
+
 // Eliminar una notificación por ID
 exports.deleteNotification = async (req, res) => {
     try {

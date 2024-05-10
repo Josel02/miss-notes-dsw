@@ -12,4 +12,7 @@ router.delete('/:id', verifyTokenAndRole(), notificationsController.deleteNotifi
 // Obtener el conteo de notificaciones, total y no leídas
 router.get('/count', verifyTokenAndRole(), notificationsController.getNotificationCount);
 
+// Marcar una notificación como leída
+router.put('/:id/read', verifyTokenAndRole(), notificationsController.markAsRead);
+
 module.exports = router;
