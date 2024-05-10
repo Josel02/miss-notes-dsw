@@ -444,24 +444,35 @@ exports.getCollectionsByAdmin = async (req, res) => {
   }
 };
 
-// Quitar el propio usuario de los compartidos de una colección
 exports.unshareCollection = async (req, res) => {
   const { collectionId } = req.body;
   const userId = req.user.userId;
 
   try {
-    const collection = await Collection.findById(collectionId);
+    const collection = await Collection.findById(collectionId).populate('notes');
     if (!collection || !collection.sharedWith.includes(userId)) {
       return res.status(404).json({ message: 'Collection not found or not shared with you.' });
     }
 
+    // Filter out the user's ID from the sharedWith list
     collection.sharedWith = collection.sharedWith.filter(id => id.toString() !== userId);
+
+    // Filter out notes from the collection that are owned by the user, without deleting them from the system
+    let notesToKeep = [];
+    if (collection.notes && collection.notes.length > 0) {
+      notesToKeep = collection.notes.filter(note => note.userId.toString() !== userId);
+    }
+
+    // Update the collection by setting the filtered notes
+    collection.notes = notesToKeep;
+
     await collection.save();
     res.status(200).json({ message: 'Collection unshared successfully.', collection });
   } catch (error) {
     res.status(500).json({ message: 'Error unsharing the collection: ' + error.message });
   }
 };
+
 
 // Compartir una colección con amigos
 exports.shareCollectionWithFriends = async (req, res) => {
