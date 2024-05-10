@@ -26,6 +26,19 @@ exports.sendFriendRequest = async (req, res) => {
             existingRequest.requestDate = new Date();
             existingRequest.actionUser = 'Requester';
             await existingRequest.save();
+
+            // Crear notificación para el usuario receptor sobre el reenvío de la solicitud
+            const notification = new Notification({
+                userId: receiverId,
+                text: `${requester.name} has re-sent you a friend request!`,
+                type: 'friendRequest',
+                data: {
+                    friendId: requesterId,
+                    friendshipId: existingRequest._id  // Agregar el ID de la amistad aquí
+                }
+            });
+            await notification.save();
+
             return res.status(200).json({ message: 'Friend request re-sent.', friendshipId: existingRequest._id });
         }
 
@@ -57,7 +70,6 @@ exports.sendFriendRequest = async (req, res) => {
         res.status(500).json({ message: 'Error sending friend request: ' + error.message });
     }
 };
-
 
 // Aceptar una solicitud de amistad
 exports.acceptFriendRequest = async (req, res) => {

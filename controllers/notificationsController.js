@@ -47,13 +47,12 @@ exports.deleteNotification = async (req, res) => {
         const { id } = req.params;
         const userId = req.user.userId;
 
-        // Asegurarse que la notificación pertenece al usuario
-        const notification = await Notification.findOne({ _id: id, userId: userId });
+        // Check if notification exists and delete it in one step
+        const notification = await Notification.findByIdAndDelete({ _id: id, userId: userId });
         if (!notification) {
             return res.status(404).json({ message: 'Notification not found or access denied.' });
         }
 
-        await notification.remove();
         res.status(200).json({ message: 'Notification deleted successfully.' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting notification: ' + error.message });
