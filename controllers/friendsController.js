@@ -6,6 +6,7 @@ const Notification = require('../models/notification');
 exports.sendFriendRequest = async (req, res) => {
     const { receiverId } = req.body;  // El ID del receptor viene del cuerpo de la solicitud
     const requesterId = req.user.userId;  // El ID del solicitante viene del token
+
     try {
         const requester = await User.findById(requesterId);
         const receiver = await User.findById(receiverId);
@@ -43,16 +44,20 @@ exports.sendFriendRequest = async (req, res) => {
                 userId: receiverId,
                 text: `${requester.name} has sent you a friend request!`,
                 type: 'friendRequest',
-                data: { friendId: requesterId }
+                data: {
+                    friendId: requesterId,
+                    friendshipId: newFriendship._id  // Agregar el ID de la amistad aquí
+                }
             });
             await notification.save();
 
-              return res.status(201).json({ message: 'Friend request sent.', friendshipId: newFriendship._id });
+            return res.status(201).json({ message: 'Friend request sent.', friendshipId: newFriendship._id });
         }
     } catch (error) {
         res.status(500).json({ message: 'Error sending friend request: ' + error.message });
     }
 };
+
 
 // Aceptar una solicitud de amistad
 exports.acceptFriendRequest = async (req, res) => {
