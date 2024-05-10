@@ -6,9 +6,9 @@ const verifyTokenAndRole = require('../middleware/authMiddleware');
 // Rutas administrativas para operaciones globales en colecciones
 router.get('/admin/collections', verifyTokenAndRole("Admin"), collectionsController.getCollectionsByAdmin); // Obtener todas las colecciones de todos los usuarios
 router.post('/admin/collections', verifyTokenAndRole("Admin"), collectionsController.createCollectionByAdmin); // Crear una nueva colección para cualquier usuario
+router.put('/admin-add/collections/:collectionId', verifyTokenAndRole("Admin"), collectionsController.addNotesToCollectionByAdmin); // Añadir múltiples notas a una colección para cualquier usuario
 router.put('/admin/collections/:id', verifyTokenAndRole("Admin"), collectionsController.updateCollectionByAdmin); // Editar cualquier colección de cualquier usuario
 router.delete('/admin/collections/:id', verifyTokenAndRole("Admin"), collectionsController.deleteCollectionByAdmin); // Borrar cualquier colección de cualquier usuario
-router.put('/admin/collections/:id/notes/add', verifyTokenAndRole("Admin"), collectionsController.addNotesToCollectionByAdmin); // Añadir múltiples notas a una colección para cualquier usuario
 
 // Rutas básicas para operaciones CRUD en colecciones
 router.post('/', verifyTokenAndRole(), collectionsController.createCollection); // Crear una nueva colección

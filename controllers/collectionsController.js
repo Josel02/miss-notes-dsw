@@ -273,7 +273,7 @@ exports.getCollectionsContainingNote = async (req, res) => {
 exports.addNotesToCollectionByAdmin = async (req, res) => {
   const { collectionId } = req.params;
   const { noteIds, userId } = req.body; // ID del usuario se pasa en el cuerpo
-
+  console.log("collectionId: ", collectionId, "userId: ", userId)
   try {
     // Verificar que la colección exista y pertenezca al usuario correcto
     const collection = await Collection.findOne({ _id: collectionId, userId });
