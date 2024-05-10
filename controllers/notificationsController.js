@@ -7,16 +7,13 @@ exports.getAllNotifications = async (req, res) => {
         // Obtener el ID del usuario desde el token
         const userId = req.user.userId;
 
-        // Encontrar y actualizar todas las notificaciones a leídas
-        const notifications = await Notification.find({ userId: userId })
+        // Encontrar todas las notificaciones no leídas del usuario
+        const notifications = await Notification.find({ userId: userId, read: false })
             .populate({
                 path: 'data.friendId',
                 select: 'name email'
             })
             .sort({ date: -1 });
-
-        // Marcar notificaciones como leídas
-        await Notification.updateMany({ userId: userId, read: false }, { read: true });
 
         res.status(200).json(notifications);
     } catch (error) {

@@ -3,7 +3,7 @@ const router = express.Router();
 const notificationsController = require('../controllers/notificationsController');
 const verifyTokenAndRole = require('../middleware/authMiddleware');
 
-// Obtener todas las notificaciones del usuario
+// Obtener todas las notificaciones no leidas del usuario
 router.get('/', verifyTokenAndRole(), notificationsController.getAllNotifications);
 
 // Eliminar una notificación específica por su ID
