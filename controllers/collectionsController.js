@@ -1,6 +1,8 @@
 const Collection = require('../models/collection');
 const Note = require('../models/note');
 const User = require('../models/user');
+const Friendship = require('../models/friendship');
+const Notification = require('../models/notification');
 
 // Crear una nueva colección
 exports.createCollection = async (req, res) => {
@@ -31,6 +33,10 @@ exports.getCollectionsByUser = async (req, res) => {
           select: '_id name email'  // Asegúrate de incluir '_id' aquí para obtener los IDs de los usuarios
         },
         select: 'title content userId sharedWith'
+      })
+      .populate({
+        path: 'sharedWith',
+        select: 'name email'
       });
 
     const modifiedCollections = collections.map(collection => {
@@ -38,7 +44,7 @@ exports.getCollectionsByUser = async (req, res) => {
         ...collection.toObject(),
         notes: collection.notes.map(note => ({
           ...note.toObject(),
-          isEditable: note.userId.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId),
+          isEditable: note.userId._id.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId),
           sharedWith: note.sharedWith.map(user => ({
             _id: user._id,  // Pasar el ID del usuario
             name: user.name,
@@ -67,6 +73,10 @@ exports.getSharedCollectionsWithMe = async (req, res) => {
           select: 'name email' // Selecciona los datos del propietario y los compartidos
         },
         select: 'title content userId sharedWith'
+      })
+      .populate({
+        path: 'sharedWith',
+        select: 'name email'
       });
 
     const modifiedCollections = collections.map(collection => ({
@@ -74,7 +84,7 @@ exports.getSharedCollectionsWithMe = async (req, res) => {
       sharedWith: collection.sharedWith.filter(user => user._id.toString() !== userId), // Quita al usuario actual de la lista de compartidos
       notes: collection.notes.map(note => ({
         ...note.toObject(),
-        isEditable: note.userId.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId), // Determina si el usuario puede editar la nota
+        isEditable: note.userId._id.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId), // Determina si el usuario puede editar la nota
         sharedWith: note.sharedWith.filter(user => user._id.toString() !== userId) // Quita al usuario actual de la lista de compartidos en cada nota
       }))
     }));
@@ -84,7 +94,6 @@ exports.getSharedCollectionsWithMe = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving shared collections: ' + error.message });
   }
 };
-
 
 // Actualizar el nombre de una colección, permitiendo al propietario y a usuarios específicamente compartidos modificar el nombre
 exports.updateNameCollection = async (req, res) => {
@@ -231,36 +240,16 @@ exports.updateNoteListInCollection = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to update the note list in this collection. You need to be the owner or a shared user.' });
     }
 
-    // Obtener notas existentes para validar permisos
-    const notes = await Note.find({ _id: { $in: noteIds } });
-
-    // Añadir nuevas notas a la colección
-    const notesToAdd = [];
-    notes.forEach(note => {
-      if (note.userId.toString() === userId || note.sharedWith.some(sharedUser => sharedUser.toString() === userId)) {
-        notesToAdd.push(note._id);
-      } else {
-        return res.status(403).json({ message: `You do not have permission to add note with ID ${note._id} to the collection.` });
-      }
-    });
-
-    // Quitar notas de la colección (sin verificar permisos de propiedad)
-    const existingNoteIds = collection.notes.map(note => note.toString());
-    const notesToRemove = existingNoteIds.filter(noteId => !noteIds.includes(noteId));
-
-    // Actualizar la lista de notas en la colección
-    collection.notes = existingNoteIds
-      .filter(noteId => !notesToRemove.includes(noteId)) // Eliminar notas
-      .concat(notesToAdd.filter(noteId => !existingNoteIds.includes(noteId.toString()))); // Añadir notas nuevas
+    // Actualizar la lista de notas en la colección sin verificar cada nota individual
+    collection.notes = noteIds;
 
     await collection.save();
-    res.status(200).json({ message: 'Note list updated successfully', collection });
+    res.status(200).json({ message: 'Note list updated successfully', noteIds: collection.notes });
+
   } catch (error) {
     res.status(500).json({ message: 'Error updating the note list in the collection: ' + error.message });
   }
 };
-
-
 
 // Función para obtener todas las colecciones que contienen una nota específica, mostrando el contenido completo de las notas
 exports.getCollectionsContainingNote = async (req, res) => {
@@ -455,18 +444,28 @@ exports.getCollectionsByAdmin = async (req, res) => {
   }
 };
 
-// Quitar el propio usuario de los compartidos de una colección
 exports.unshareCollection = async (req, res) => {
   const { collectionId } = req.body;
   const userId = req.user.userId;
 
   try {
-    const collection = await Collection.findById(collectionId);
+    const collection = await Collection.findById(collectionId).populate('notes');
     if (!collection || !collection.sharedWith.includes(userId)) {
       return res.status(404).json({ message: 'Collection not found or not shared with you.' });
     }
 
+    // Filter out the user's ID from the sharedWith list
     collection.sharedWith = collection.sharedWith.filter(id => id.toString() !== userId);
+
+    // Filter out notes from the collection that are owned by the user, without deleting them from the system
+    let notesToKeep = [];
+    if (collection.notes && collection.notes.length > 0) {
+      notesToKeep = collection.notes.filter(note => note.userId.toString() !== userId);
+    }
+
+    // Update the collection by setting the filtered notes
+    collection.notes = notesToKeep;
+
     await collection.save();
     res.status(200).json({ message: 'Collection unshared successfully.', collection });
   } catch (error) {
@@ -474,30 +473,53 @@ exports.unshareCollection = async (req, res) => {
   }
 };
 
+
 // Compartir una colección con amigos
 exports.shareCollectionWithFriends = async (req, res) => {
   const { collectionId, friendIds } = req.body;
   const userId = req.user.userId;
-
+  
   try {
-    const collection = await Collection.findById(collectionId);
-    if (!collection || collection.userId.toString() !== userId) {
+    // Verificar que la colección exista y pertenezca al usuario
+    const collection = await Collection.findById(collectionId).populate('userId', 'name email');
+    if (!collection || collection.userId._id.toString() !== userId) {
       return res.status(403).json({ message: 'Unauthorized: Only the collection owner can share the collection.' });
     }
 
-    const friends = await Friendship.find({
+    // Vetificar que todos los receptores son amigos confirmados
+    const friendships = await Friendship.find({
       $or: [
         { requester: userId, receiver: { $in: friendIds }, status: 'Accepted' },
         { requester: { $in: friendIds }, receiver: userId, status: 'Accepted' }
       ]
     });
 
-    if (friends.length !== friendIds.length) {
+    // Filtrar IDs de amigos confirmados
+    const confirmedFriendIds = friendships.map(f => 
+      f.requester.toString() === userId ? f.receiver.toString() : f.requester.toString()
+    );
+
+    if (confirmedFriendIds.length !== friendIds.length) {
       return res.status(404).json({ message: 'One or more users are not friends.' });
     }
 
-    collection.sharedWith = friendIds;
+    // Actualizar la lista de compartidos con la lista de amigos confirmados
+    collection.sharedWith = confirmedFriendIds;
     await collection.save();
+
+    //Enviar notificaciones a cada amigo confirmado
+    confirmedFriendIds.forEach(async friendId => {
+      const notification = new Notification({
+        userId: friendId,
+        text: `${collection.userId.name} has shared the  collection '${collection.name}' with you!`,
+        type: 'collectionShared',
+        data: { collectionId: collection._id, friendId: userId}
+      });
+      await notification.save();
+    });
+
+
+
     res.status(200).json({ message: 'Collection shared successfully.', collection });
   } catch (error) {
     res.status(500).json({ message: 'Error sharing the collection: ' + error.message });

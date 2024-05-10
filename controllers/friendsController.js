@@ -1,67 +1,95 @@
 const Friendship = require('../models/friendship');
 const User = require('../models/user');
+const Notification = require('../models/notification');
 
 // Enviar una solicitud de amistad
 exports.sendFriendRequest = async (req, res) => {
-  const { receiverId } = req.body;  // El ID del receptor viene del cuerpo de la solicitud
-  const requesterId = req.user.userId;  // El ID del solicitante viene del token
-  try {
-      const existingRequest = await Friendship.findOne({
-          $or: [
-              { requester: requesterId, receiver: receiverId },
-              { requester: receiverId, receiver: requesterId }
-          ]
-      });
+    const { receiverId } = req.body;  // El ID del receptor viene del cuerpo de la solicitud
+    const requesterId = req.user.userId;  // El ID del solicitante viene del token
 
-      // Permitir reenviar la solicitud si fue previamente denegada o revocada
-      if (existingRequest && (existingRequest.status === 'Accepted' || existingRequest.status === 'Requested')) {
-          return res.status(400).json({ message: `Friend request already exists with status: ${existingRequest.status}.` });
-      } else if (existingRequest && (existingRequest.status === 'Denied' || existingRequest.status === 'Revoked')) {
-          // Actualiza la solicitud existente para reenviarla
-          existingRequest.status = 'Requested';
-          existingRequest.requestDate = new Date();
-          existingRequest.actionUser = 'Requester';
-          await existingRequest.save();
-          return res.status(200).json({ message: 'Friend request re-sent.', friendshipId: existingRequest._id });
-      }
+    try {
+        const requester = await User.findById(requesterId);
+        const receiver = await User.findById(receiverId);
+        const existingRequest = await Friendship.findOne({
+            $or: [
+                { requester: requesterId, receiver: receiverId },
+                { requester: receiverId, receiver: requesterId }
+            ]
+        });
 
-      // Crear una nueva solicitud si no existe ninguna previa
-      if (!existingRequest) {
-          const newFriendship = new Friendship({
-              requester: requesterId,
-              receiver: receiverId,
-              status: 'Requested',
-              actionUser: 'Requester'
-          });
-          await newFriendship.save();
-          return res.status(201).json({ message: 'Friend request sent.', friendshipId: newFriendship._id });
-      }
-  } catch (error) {
-      res.status(500).json({ message: 'Error sending friend request: ' + error.message });
-  }
+        // Permitir reenviar la solicitud si fue previamente denegada o revocada
+        if (existingRequest && (existingRequest.status === 'Accepted' || existingRequest.status === 'Requested')) {
+            return res.status(400).json({ message: `Friend request already exists with status: ${existingRequest.status}.` });
+        } else if (existingRequest && (existingRequest.status === 'Denied' || existingRequest.status === 'Revoked')) {
+            // Actualiza la solicitud existente para reenviarla
+            existingRequest.status = 'Requested';
+            existingRequest.requestDate = new Date();
+            existingRequest.actionUser = 'Requester';
+            await existingRequest.save();
+            return res.status(200).json({ message: 'Friend request re-sent.', friendshipId: existingRequest._id });
+        }
+
+        // Crear una nueva solicitud si no existe ninguna previa
+        if (!existingRequest) {
+            const newFriendship = new Friendship({
+                requester: requesterId,
+                receiver: receiverId,
+                status: 'Requested',
+                actionUser: 'Requester'
+            });
+            await newFriendship.save();
+
+            // Crear notificación para el usuario receptor
+            const notification = new Notification({
+                userId: receiverId,
+                text: `${requester.name} has sent you a friend request!`,
+                type: 'friendRequest',
+                data: {
+                    friendId: requesterId,
+                    friendshipId: newFriendship._id  // Agregar el ID de la amistad aquí
+                }
+            });
+            await notification.save();
+
+            return res.status(201).json({ message: 'Friend request sent.', friendshipId: newFriendship._id });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Error sending friend request: ' + error.message });
+    }
 };
 
 
 // Aceptar una solicitud de amistad
 exports.acceptFriendRequest = async (req, res) => {
-  const { friendshipId } = req.params; // ID del documento de la amistad
-  try {
-      const friendship = await Friendship.findById(friendshipId);
-      if (!friendship || friendship.receiver.toString() !== req.user.userId) {
-          return res.status(404).json({ message: 'Friend request not found or access denied.' });
-      }
-      //Nos aseguramos de que la solicitud de amistad sólo se pueda aceptar si su estado actual es "Requested".
-      if (friendship.status !== 'Requested') {
-          return res.status(400).json({ message: 'Friend request cannot be accepted as it is not in Requested status.' });
-      }
-      friendship.status = 'Accepted';
-      friendship.responseDate = new Date();
-      friendship.actionUser = 'Receiver';
-      await friendship.save();
-      res.status(200).json({ message: 'Friend request accepted.' });
-  } catch (error) {
-      res.status(500).json({ message: 'Error accepting friend request: ' + error.message });
-  }
+    const { friendshipId } = req.params;
+    try {
+        const friendship = await Friendship.findById(friendshipId).populate('requester');
+        if (!friendship || friendship.receiver.toString() !== req.user.userId) {
+            return res.status(404).json({ message: 'Friend request not found or access denied.' });
+        }
+        if (friendship.status !== 'Requested') {
+            return res.status(400).json({ message: 'Friend request cannot be accepted as it is not in Requested status.' });
+        }
+        friendship.status = 'Accepted';
+        friendship.responseDate = new Date();
+        friendship.actionUser = 'Receiver';
+        await friendship.save();
+
+        const receiver = await User.findById(req.user.userId);
+
+        // Crear notificación para el usuario que envió la solicitud
+        const notification = new Notification({
+            userId: friendship.requester._id,
+            text: `${receiver.name} has accepted your friend request!`,
+            type: 'friendRequestAccepted',
+            data: { friendId: req.user.userId }
+        });
+        await notification.save();
+
+        res.status(200).json({ message: 'Friend request accepted.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error accepting friend request: ' + error.message });
+    }
 };
 
 // Rechazar una solicitud de amistad
