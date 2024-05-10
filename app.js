@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -13,8 +15,11 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
 var friendsRouter = require('./routes/friends');
+var collectionsRouter = require('./routes/collections');
+const notificationsRouter = require('./routes/notifications');
 
-mongoose.connect('mongodb://localhost/missnotes');
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/missnotes');
+
 
 
 var app = express();
@@ -37,6 +42,8 @@ app.use('/', indexRouter);
 app.use('/notes', notesRouter);
 app.use('/users', usersRouter);
 app.use('/friends', friendsRouter);
+app.use('/collections', collectionsRouter);
+app.use('/notifications', notificationsRouter);
 
 // Servir archivos estáticos de React en producción
 if (process.env.NODE_ENV === 'production') {
