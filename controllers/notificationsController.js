@@ -7,16 +7,13 @@ exports.getAllNotifications = async (req, res) => {
         // Obtener el ID del usuario desde el token
         const userId = req.user.userId;
 
-        // Encontrar y actualizar todas las notificaciones a leídas
-        const notifications = await Notification.find({ userId: userId })
+        // Encontrar todas las notificaciones no leídas del usuario
+        const notifications = await Notification.find({ userId: userId, read: false })
             .populate({
                 path: 'data.friendId',
                 select: 'name email'
             })
             .sort({ date: -1 });
-
-        // Marcar notificaciones como leídas
-        await Notification.updateMany({ userId: userId, read: false }, { read: true });
 
         res.status(200).json(notifications);
     } catch (error) {
@@ -24,8 +21,8 @@ exports.getAllNotifications = async (req, res) => {
     }
 };
 
-// Eliminar una notificación por ID
-exports.deleteNotification = async (req, res) => {
+// Marcar una notificación como leída
+exports.markAsRead = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.userId;
@@ -36,7 +33,26 @@ exports.deleteNotification = async (req, res) => {
             return res.status(404).json({ message: 'Notification not found or access denied.' });
         }
 
-        await notification.remove();
+        notification.read = true;
+        await notification.save();
+        res.status(200).json({ message: 'Notification marked as read.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error marking notification as read: ' + error.message });
+    }
+};
+
+// Eliminar una notificación por ID
+exports.deleteNotification = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.userId;
+
+        // Check if notification exists and delete it in one step
+        const notification = await Notification.findByIdAndDelete({ _id: id, userId: userId });
+        if (!notification) {
+            return res.status(404).json({ message: 'Notification not found or access denied.' });
+        }
+
         res.status(200).json({ message: 'Notification deleted successfully.' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting notification: ' + error.message });
