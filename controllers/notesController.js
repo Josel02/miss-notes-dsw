@@ -220,14 +220,29 @@ exports.updateNoteCollections = async (req, res) => {
   }
 };
 
-// Obtener notas donde yo soy el propietario
 exports.getMyNotes = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const notes = await Note.find({ userId: userId }).populate({
+
+    // Recuperar el email del usuario
+    const user = await User.findById(userId).select('email -_id');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Buscar las notas asociadas al usuario
+    let notes = await Note.find({ userId: userId }).populate({
       path: 'sharedWith',
       select: 'name email -_id'
     });
+
+    // Añadir el email del usuario a cada nota
+    notes = notes.map(note => ({
+      ...note.toObject(),
+      email: user.email
+    }));
+
+    // Enviar las notas modificadas como respuesta
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Error getting notes: ' + error.message });
