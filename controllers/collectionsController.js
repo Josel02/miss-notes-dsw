@@ -44,7 +44,7 @@ exports.getCollectionsByUser = async (req, res) => {
         ...collection.toObject(),
         notes: collection.notes.map(note => ({
           ...note.toObject(),
-          isEditable: note.userId.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId),
+          isEditable: note.userId._id.toString() === userId || note.sharedWith.some(user => user._id.toString() === userId),
           sharedWith: note.sharedWith.map(user => ({
             _id: user._id,  // Pasar el ID del usuario
             name: user.name,
