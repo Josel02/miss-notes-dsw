@@ -1,20 +1,54 @@
 const express = require('express');
 const router = express.Router();
 const notesController = require('../controllers/notesController');
+const verifyTokenAndRole = require('../middleware/authMiddleware');
 
-// Obtener todas las notas
-router.get('/', notesController.getAllNotes);
+// Definir primero rutas específicas antes de rutas con parámetros
+
+//Ruta para obtener todas las notas de un usuario donde es el propietario
+//router.get('/user', verifyTokenAndRole(), notesController.getNotesByUser);
+router.get('/user', verifyTokenAndRole(), notesController.getMyNotes);
 
 // Obtener una nota por su ID
-router.get('/:id', notesController.getNoteById);
+//router.get('/:id', notesController.getNoteById);
 
-// Crear una nueva nota
-router.post('/', notesController.createNote);
+// Crear una nueva nota para el usuario autenticado
+router.post('/', verifyTokenAndRole(), notesController.createNote);
 
-// Actualizar una nota existente
-router.put('/:id', notesController.updateNote);
+// Obtener todas las notas de un usuario - Solo para Admins
+router.get('/', verifyTokenAndRole("Admin"), notesController.getAllNotes);
 
-// Eliminar una nota
-router.delete('/:id', notesController.deleteNote);
+// Borrar la nota de un usuario - Solo para Admins
+router.delete('/admin-delete/:id', verifyTokenAndRole("Admin"), notesController.deleteNoteByAdmin);
+
+// Añadir una nota a un usuario - Solo para Admins
+router.post('/admin-add', verifyTokenAndRole("Admin"), notesController.createNoteByAdmin);
+
+// Editar una nota a un usuario - Solo para Admins
+router.put('/admin-update/:id', verifyTokenAndRole("Admin"), notesController.updateNoteByAdmin);
+
+// Obtener notas donde yo soy el propietario
+//router.get('/my-notes', verifyTokenAndRole(), notesController.getMyNotes);
+
+// Obtener notas compartidas conmigo
+router.get('/shared-with-me', verifyTokenAndRole(), notesController.getSharedWithMeNotes);
+
+// Compartir una nota con amigos
+router.post('/share-note', verifyTokenAndRole(), notesController.shareNoteWithFriends);
+
+// Quitarme de compartidos en la nota de un amigo
+router.post('/unshare-note', verifyTokenAndRole(), notesController.unshareNote);
+
+// Actualiza la lista de usuarios con los que se comparte una nota propietaria
+router.put('/update-shared-users', verifyTokenAndRole(), notesController.updateSharedUsers);
+
+// Actualizar una nota existente que pertenece al usuario autenticado
+router.put('/:id', verifyTokenAndRole(), notesController.updateNote);
+
+// Eliminar una nota que pertenece al usuario autenticado
+router.delete('/:id', verifyTokenAndRole(), notesController.deleteNote);
+
+//Ruta para actualizar las colecciones de una nota
+router.put('/:noteId/collections', verifyTokenAndRole(), notesController.updateNoteCollections);
 
 module.exports = router;
